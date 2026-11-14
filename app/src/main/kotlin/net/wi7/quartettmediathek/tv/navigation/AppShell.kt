@@ -53,6 +53,7 @@ import net.wi7.quartettmediathek.tv.ui.screens.ShellUiState
 import net.wi7.quartettmediathek.tv.ui.screens.AppRail
 import net.wi7.quartettmediathek.tv.ui.screens.DiscoverScreen
 import net.wi7.quartettmediathek.tv.ui.screens.EpisodeScreen
+import net.wi7.quartettmediathek.tv.ui.screens.HistoryScreen
 import net.wi7.quartettmediathek.tv.ui.screens.HomeScreen
 import net.wi7.quartettmediathek.tv.ui.screens.SearchScreen
 import net.wi7.quartettmediathek.tv.ui.screens.SettingsScreen
@@ -129,6 +130,7 @@ fun AppShell(startRoute: String) {
                 composable(Routes.SEARCH) { SearchScreen() }
                 composable(Routes.SUBSCRIPTIONS) { SubscriptionsScreen() }
                 composable(Routes.BOOKMARKS) { WatchlistScreen() }
+                composable(Routes.HISTORY) { HistoryScreen() }
                 composable(Routes.SETTINGS) { SettingsScreen() }
                 composable(Routes.SHOW_PATTERN) { e -> ShowScreen(Routes.showRef(e.arg("source"), e.arg("key"))) }
                 composable(Routes.EPISODE_PATTERN) { e -> EpisodeScreen(Routes.episodeRef(e.arg("source"), e.arg("key"))) }
@@ -171,6 +173,7 @@ fun AppShell(startRoute: String) {
                     onToggleSubscribe = menuVm::toggleSubscribe,
                     onToggleBookmark = menuVm::toggleBookmark,
                     onToggleWatched = menuVm::toggleWatched,
+                    onRemoveFromHistory = menuVm::removeFromHistory,
                     onGoToShow = { nav.navigate(Routes.show(it)) },
                 )
             }

@@ -60,6 +60,12 @@ interface LibraryRepository {
     fun watchedKeys(): Flow<Set<String>>
 
     fun continueWatching(): Flow<List<Progress>>
+    /** Every episode that was played (in progress or watched), most recently played first, at most 200. */
+    fun history(): Flow<List<Progress>>
+    /** All played episodes without a limit; used to mark tiles (progress bar, "watched"). Order is unspecified. */
+    fun allProgress(): Flow<List<Progress>>
+    /** Forgets progress and watched state of an episode. */
+    suspend fun removeFromHistory(ref: EpisodeRef)
     fun progress(ref: EpisodeRef): Flow<Progress?>
     suspend fun saveProgress(episode: Episode, positionSeconds: Long)
     suspend fun setWatched(episode: Episode, watched: Boolean)

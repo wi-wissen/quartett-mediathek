@@ -12,13 +12,14 @@ object Routes {
     const val SEARCH = "search"
     const val SUBSCRIPTIONS = "subscriptions"
     const val BOOKMARKS = "bookmarks"
+    const val HISTORY = "history"
     const val SETTINGS = "settings"
 
     const val SHOW_PATTERN = "show/{source}/{key}"
     const val EPISODE_PATTERN = "episode/{source}/{key}"
     const val PLAYER_PATTERN = "player/{source}/{key}/{start}"
 
-    val topLevel = listOf(HOME, DISCOVER, SEARCH, SUBSCRIPTIONS, BOOKMARKS, SETTINGS)
+    val topLevel = listOf(HOME, DISCOVER, SEARCH, SUBSCRIPTIONS, BOOKMARKS, HISTORY, SETTINGS)
 
     fun show(ref: ShowRef) = "show/${ref.source.name}/${encode(ref.key)}"
     fun episode(ref: EpisodeRef) = "episode/${ref.source.name}/${encode(ref.key)}"

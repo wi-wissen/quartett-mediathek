@@ -73,21 +73,7 @@ class FakeLibraryRepository : LibraryRepository {
         },
     )
     private val bookmarks = MutableStateFlow(FakeData.initialBookmarks)
-    private val progress = MutableStateFlow(initialProgress())
-
-    private fun initialProgress(): Map<String, Progress> {
-        val map = mutableMapOf<String, Progress>()
-        FakeData.initialProgress.entries.forEachIndexed { i, (key, pos) ->
-            // "abgruende-3" is the most recently played one.
-            val at = FakeData.now - (if (key == "abgruende-3") 20 else 600 + i * 60).minutes
-            map[key] = Progress(FakeData.episode(key), pos, false, at)
-        }
-        FakeData.initialWatched.forEach { key ->
-            val e = FakeData.episode(key)
-            map[key] = Progress(e, e.durationSeconds.toLong(), true, FakeData.now - 3.days)
-        }
-        return map
-    }
+    private val progress = MutableStateFlow(FakeData.sampleProgress().associateBy { it.episode.ref.key })
 
     override fun subscriptions(): Flow<List<Subscription>> = subs
 
@@ -130,6 +116,15 @@ class FakeLibraryRepository : LibraryRepository {
         progress.map { all -> all.values.filter { it.watched }.map { LibraryKeys.episode(it.episode.ref) }.toSet() }
 
     override fun continueWatching(): Flow<List<Progress>> = progress.map { it.values.sortedByDescending { p -> p.updatedAt } }
+    override fun history(): Flow<List<Progress>> =
+        progress.map { it.values.filter { p -> p.watched || p.positionSeconds > 0 }.sortedByDescending { p -> p.updatedAt } }
+
+    override fun allProgress(): Flow<List<Progress>> = progress.map { it.values.toList() }
+
+    override suspend fun removeFromHistory(ref: EpisodeRef) {
+        progress.update { it - ref.key }
+    }
+
     override fun progress(ref: EpisodeRef): Flow<Progress?> = progress.map { it[ref.key] }
 
     override suspend fun saveProgress(episode: Episode, positionSeconds: Long) {

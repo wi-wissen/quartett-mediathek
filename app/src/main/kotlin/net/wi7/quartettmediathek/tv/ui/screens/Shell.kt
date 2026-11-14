@@ -134,6 +134,7 @@ private val railItems = listOf(
     RailItem(Routes.SEARCH, R.string.nav_search, R.drawable.ic_search),
     RailItem(Routes.SUBSCRIPTIONS, R.string.nav_subscriptions, R.drawable.ic_subscriptions),
     RailItem(Routes.BOOKMARKS, R.string.nav_bookmarks, R.drawable.ic_bookmark),
+    RailItem(Routes.HISTORY, R.string.nav_history, R.drawable.ic_history),
 )
 private val settingsItem = RailItem(Routes.SETTINGS, R.string.nav_settings, R.drawable.ic_settings)
 

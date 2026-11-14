@@ -3,13 +3,11 @@ package net.wi7.quartettmediathek.tv.player
 import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.wi7.quartettmediathek.model.Episode
 import net.wi7.quartettmediathek.model.EpisodeRef
 import net.wi7.quartettmediathek.model.StreamInfo
@@ -101,13 +99,11 @@ class PlayerViewModel(
         if (state.value !is PlayerUiState.Ready) return
         val position = lastPositionSeconds
         val watched = PlayerLogic.isWatched(position, lastDurationSeconds)
-        viewModelScope.launch {
-            // The write must survive the ViewModel being cleared right after exit.
-            withContext(NonCancellable) {
-                runCatching {
-                    deps.library.saveProgress(episode, position)
-                    if (watched) deps.library.setWatched(episode, true)
-                }
+        // Not viewModelScope: it is cancelled when the player is popped, which would drop the final save.
+        deps.saveScope.launch {
+            runCatching {
+                deps.library.saveProgress(episode, position)
+                if (watched) deps.library.setWatched(episode, true)
             }
         }
     }

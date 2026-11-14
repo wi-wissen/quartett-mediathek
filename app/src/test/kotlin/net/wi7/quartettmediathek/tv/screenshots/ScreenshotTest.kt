@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import android.app.Application
 import com.github.takahirom.roborazzi.captureRoboImage
+import net.wi7.quartettmediathek.library.ProgressIndex
 import net.wi7.quartettmediathek.repository.Progress
 import net.wi7.quartettmediathek.repository.StartScreen
 import net.wi7.quartettmediathek.tv.data.fake.FakeData
@@ -34,7 +35,10 @@ import net.wi7.quartettmediathek.tv.ui.screens.DiscoverSectionData
 import net.wi7.quartettmediathek.tv.ui.screens.DiscoverUiState
 import net.wi7.quartettmediathek.tv.ui.screens.EpisodeContent
 import net.wi7.quartettmediathek.tv.ui.screens.EpisodeUiState
+import net.wi7.quartettmediathek.tv.ui.screens.HistoryContent
+import net.wi7.quartettmediathek.tv.ui.screens.HistoryUiState
 import net.wi7.quartettmediathek.tv.ui.screens.HomeContent
+import net.wi7.quartettmediathek.tv.ui.screens.historyTiles
 import net.wi7.quartettmediathek.tv.ui.screens.SearchContent
 import net.wi7.quartettmediathek.tv.ui.screens.SearchUiState
 import net.wi7.quartettmediathek.tv.ui.screens.SettingsContent
@@ -65,7 +69,8 @@ import kotlin.time.Duration.Companion.hours
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 abstract class ScreenshotTest(private val locale: String) {
-    protected val overlay = LibraryOverlay()
+    /** Library with started and watched episodes, so the tile markers are visible in every screenshot. */
+    protected val overlay = LibraryOverlay(progress = ProgressIndex(FakeData.sampleProgress()))
 
     protected fun snap(name: String, activeRoute: String?, content: @Composable () -> Unit) =
         captureRoboImage("src/test/screenshots/${locale}_$name.png") {
@@ -93,7 +98,7 @@ abstract class ScreenshotTest(private val locale: String) {
         }
 
     companion object {
-        val TOP_LEVEL = listOf(Routes.HOME, Routes.DISCOVER, Routes.SEARCH, Routes.SUBSCRIPTIONS, Routes.BOOKMARKS, Routes.SETTINGS)
+        val TOP_LEVEL = listOf(Routes.HOME, Routes.DISCOVER, Routes.SEARCH, Routes.SUBSCRIPTIONS, Routes.BOOKMARKS, Routes.HISTORY, Routes.SETTINGS)
     }
 }
 
@@ -135,6 +140,11 @@ class GermanScreenshots : ScreenshotTest("de") {
     @Test
     fun watchlist() = snap("watchlist", Routes.BOOKMARKS) {
         WatchlistContent(WatchlistUiState(true, FakeData.initialBookmarks.map { overlay.decorate(it) }))
+    }
+
+    @Test
+    fun history() = snap("history", Routes.HISTORY) {
+        HistoryContent(HistoryUiState(true, historyTiles(FakeData.sampleProgress().sortedByDescending { it.updatedAt }, overlay)))
     }
 
     @Test

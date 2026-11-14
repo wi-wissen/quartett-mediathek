@@ -8,6 +8,7 @@
     <string name="nav_search">Search</string>
     <string name="nav_subscriptions">Subscriptions</string>
     <string name="nav_bookmarks">Watchlist</string>
+    <string name="nav_history">History</string>
     <string name="nav_settings">Settings</string>
 
     <string name="refresh_state">Updated: %1$s</string>
@@ -75,7 +76,7 @@
     <string name="badge_hd">HD</string>
     <string name="badge_subtitles">UT</string>
     <string name="badge_new_count">%1$d NEW</string>
-    <string name="badge_seen">SEEN</string>
+    <string name="badge_seen">WATCHED</string>
     <string name="badge_seen_lower">watched</string>
     <string name="episode_count">%1$d episodes</string>
     <string name="meta_subscribed">subscribed</string>
@@ -95,6 +96,8 @@
     <string name="subscriptions_newest_first">newest first</string>
     <string name="subscriptions_empty">You have no subscriptions yet. Open a show and choose Subscribe, or hold OK on a tile.</string>
     <string name="watchlist_count">%1$d entries from all media libraries</string>
+    <string name="history_count">%1$d episodes you played, most recent first</string>
+    <string name="history_empty">Nothing played yet. Episodes you watch show up here.</string>
     <string name="watchlist_empty">Nothing saved yet. Hold OK on a tile and choose Add to watchlist.</string>
 
     <string name="key_space">Space</string>
@@ -110,6 +113,7 @@
     <string name="menu_bookmark_show">Add show to watchlist</string>
     <string name="menu_bookmark_episode">Add episode to watchlist</string>
     <string name="menu_remove_bookmark">Remove from watchlist</string>
+    <string name="menu_remove_history">Remove from history</string>
     <string name="menu_mark_watched">Mark as watched</string>
     <string name="menu_mark_unwatched">Mark as unwatched</string>
 

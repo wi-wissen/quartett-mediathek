@@ -135,7 +135,7 @@ private fun EpisodeTileBody(episode: Episode, state: TileState, focused: Boolean
         )
     }
     TileTitle(episode.title, focused, singleLine)
-    val suffix = episodeMetaSuffix(episode, state.progressSeconds, rememberNow())
+    val suffix = episodeMetaSuffix(episode, state.progressSeconds, rememberNow(), state.playedAt)
     MetaLine(left = episode.showTitle, fixedRight = " · $suffix")
 }
 
@@ -217,11 +217,15 @@ private fun TileOverlays(
 ) {
     Box(Modifier.fillMaxSize()) {
         if (watched) {
-            Box(Modifier.fillMaxSize().background(QColors.Background.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.badge_seen), style = QType.menuItem, color = Color.White)
-            }
+            // Dimmed thumbnail, like YouTube; the badge and the full bar below say "watched".
+            Box(Modifier.fillMaxSize().background(QColors.Background.copy(alpha = 0.5f)))
         }
-        if (newText != null) {
+        if (watched) {
+            Badge(
+                stringResource(R.string.badge_seen), Color.Black.copy(alpha = 0.78f), Color.White,
+                Modifier.align(Alignment.TopStart).padding(5.dp),
+            )
+        } else if (newText != null) {
             Badge(newText, QColors.Accent, QColors.AccentInk, Modifier.align(Alignment.TopStart).padding(5.dp))
         }
         if (bookmarked) {
@@ -238,12 +242,20 @@ private fun TileOverlays(
         if (duration != null) {
             Badge(duration, Color.Black.copy(alpha = 0.78f), Color.White, Modifier.align(Alignment.BottomEnd).padding(5.dp))
         }
-        if (progress != null) {
+        val bar = tileProgressBar(progress, watched)
+        if (bar != null) {
             Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.5.dp).background(Color.White.copy(alpha = 0.28f))) {
-                Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(QColors.Accent))
+                Box(Modifier.fillMaxHeight().fillMaxWidth(bar).background(QColors.Accent))
             }
         }
     }
+}
+
+/** Width of the bar at the bottom of an episode thumbnail: full for watched, partial for started, none otherwise. */
+fun tileProgressBar(progress: Float?, watched: Boolean): Float? = when {
+    watched -> 1f
+    progress != null && progress > 0f -> progress.coerceIn(0.02f, 1f)
+    else -> null
 }
 
 @Composable

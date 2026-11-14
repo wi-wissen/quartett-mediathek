@@ -7,6 +7,7 @@ import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.tv.ui.menu.TileMenuViewModel
 import net.wi7.quartettmediathek.tv.ui.screens.DiscoverViewModel
 import net.wi7.quartettmediathek.tv.ui.screens.EpisodeViewModel
+import net.wi7.quartettmediathek.tv.ui.screens.HistoryViewModel
 import net.wi7.quartettmediathek.tv.ui.screens.HomeViewModel
 import net.wi7.quartettmediathek.tv.ui.screens.SearchViewModel
 import net.wi7.quartettmediathek.tv.ui.screens.SettingsViewModel
@@ -30,6 +31,7 @@ class ViewModelFactory(
         SearchViewModel::class.java -> SearchViewModel(c.catalog, c.library)
         SubscriptionsViewModel::class.java -> SubscriptionsViewModel(c.library)
         WatchlistViewModel::class.java -> WatchlistViewModel(c.library)
+        HistoryViewModel::class.java -> HistoryViewModel(c.library)
         SettingsViewModel::class.java -> SettingsViewModel(c.settings)
         ShowViewModel::class.java -> ShowViewModel(requireNotNull(showRef), c.catalog, c.library)
         EpisodeViewModel::class.java -> EpisodeViewModel(requireNotNull(episodeRef), c.catalog, c.library)

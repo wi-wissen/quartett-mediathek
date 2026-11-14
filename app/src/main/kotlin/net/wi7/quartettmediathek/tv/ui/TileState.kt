@@ -3,10 +3,11 @@ package net.wi7.quartettmediathek.tv.ui
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlin.time.Instant
 import net.wi7.quartettmediathek.model.Episode
 import net.wi7.quartettmediathek.model.Show
 import net.wi7.quartettmediathek.model.ShowRef
-import net.wi7.quartettmediathek.library.LibraryKeys
+import net.wi7.quartettmediathek.library.ProgressIndex
 import net.wi7.quartettmediathek.subscription.SubscriptionFactory
 import net.wi7.quartettmediathek.model.Teaser
 import net.wi7.quartettmediathek.repository.LibraryRepository
@@ -24,6 +25,8 @@ data class TileState(
     val subscribed: Boolean = false,
     val progressSeconds: Long? = null,
     val watched: Boolean = false,
+    /** History only: when the episode was last played; the tile then shows this instead of the publication age. */
+    val playedAt: Instant? = null,
 ) {
     val key: String get() = teaser.key()
 }
@@ -32,22 +35,21 @@ data class TileState(
 @Immutable
 class LibraryOverlay(
     private val bookmarkKeys: Set<String> = emptySet(),
-    private val progress: Map<String, Progress> = emptyMap(),
+    private val progress: ProgressIndex = ProgressIndex.Empty,
     private val newEpisodeKeys: Set<String> = emptySet(),
     private val newCountByShow: Map<String, Int> = emptyMap(),
     private val subscribedShows: Set<String> = emptySet(),
-    private val watchedKeys: Set<String> = emptySet(),
 ) {
     fun decorate(teaser: Teaser): TileState = when (teaser) {
         is Teaser.OfEpisode -> {
-            val p = progress[teaser.episode.ref.key]
+            val p = progress.find(teaser.episode)
             TileState(
                 teaser = teaser,
                 isNew = teaser.episode.ref.key in newEpisodeKeys,
                 bookmarked = teaser.key() in bookmarkKeys,
                 subscribed = isSubscribed(teaser.episode.showRef, teaser.episode.showTitle),
                 progressSeconds = p?.takeIf { !it.watched && it.positionSeconds > 0 }?.positionSeconds,
-                watched = p?.watched == true || LibraryKeys.episode(teaser.episode.ref) in watchedKeys,
+                watched = p?.watched == true,
             )
         }
         is Teaser.OfShow -> TileState(
@@ -64,18 +66,17 @@ class LibraryOverlay(
 
     fun decorate(episode: Episode) = decorate(Teaser.OfEpisode(episode))
     fun decorate(show: Show) = decorate(Teaser.OfShow(show))
-    fun progressOf(episodeKey: String): Progress? = progress[episodeKey]
+    fun progressOf(episode: Episode): Progress? = progress.find(episode)
 }
 
 fun LibraryRepository.overlay(): Flow<LibraryOverlay> =
-    combine(bookmarks(), continueWatching(), feed(), subscriptions(), watchedKeys()) { bookmarks, progress, feed, subs, watched ->
+    combine(bookmarks(), allProgress(), feed(), subscriptions()) { bookmarks, progress, feed, subs ->
         val fresh = feed.filter { it.isNew }
         LibraryOverlay(
             bookmarkKeys = bookmarks.map { it.key() }.toSet(),
-            progress = progress.associateBy { it.episode.ref.key },
+            progress = ProgressIndex(progress),
             newEpisodeKeys = fresh.map { it.episode.ref.key }.toSet(),
             newCountByShow = fresh.groupingBy { it.episode.showRef?.key.orEmpty() }.eachCount(),
             subscribedShows = subs.flatMap { listOf(it.id) + it.topics.map { t -> t.lowercase() } }.toSet(),
-            watchedKeys = watched,
         )
     }
