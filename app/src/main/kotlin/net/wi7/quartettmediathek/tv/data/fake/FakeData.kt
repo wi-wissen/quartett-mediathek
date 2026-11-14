@@ -1,6 +1,5 @@
 package net.wi7.quartettmediathek.tv.data.fake
 
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -17,7 +16,8 @@ import net.wi7.quartettmediathek.model.Variant
 
 /** Invented sample content mirroring docs/mockup.html. No images: tiles draw a placeholder gradient. */
 object FakeData {
-    val now: Instant = Clock.System.now()
+    /** Fixed so previews and screenshot tests stay reproducible (Saturday, 14 Nov 2026, 20:15 CET). */
+    val now: Instant = Instant.parse("2026-11-14T19:15:00Z")
 
     private class Spec(
         val id: String,

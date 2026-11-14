@@ -53,7 +53,7 @@ import net.wi7.quartettmediathek.tv.ui.screens.SubscriptionsScreen
 import net.wi7.quartettmediathek.tv.ui.screens.WatchlistScreen
 import net.wi7.quartettmediathek.tv.ui.theme.QColors
 
-private val RailWidth = 60.dp
+internal val RailWidth = 60.dp
 
 /**
  * App shell: NavHost with all routes, left rail, fixed header and the tile context menu. The player is full screen
@@ -171,7 +171,7 @@ fun AppShell(startRoute: String) {
 private fun NavBackStackEntry.arg(name: String): String? = arguments?.getString(name)
 
 @Composable
-private fun TopFade() {
+internal fun TopFade() {
     val bg = QColors.Background
     Box(
         Modifier.fillMaxWidth().height(56.dp)

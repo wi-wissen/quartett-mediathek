@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.roborazzi)
 }
 
 // Release builds pass -PappVersionName=1.2.0; versionCode is derived as major*10000 + minor*100 + patch.
@@ -54,7 +55,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
-    testOptions { unitTests.isReturnDefaultValues = true }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+        // Screenshot tests (Roborazzi + Robolectric) need the merged resources.
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 kotlin {
@@ -90,4 +95,17 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
+
+    // Screenshot tests: ./gradlew :app:recordRoborazziDebug / :app:verifyRoborazziDebug
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+roborazzi {
+    outputDir.set(file("src/test/screenshots"))
 }

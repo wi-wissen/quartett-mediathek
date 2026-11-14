@@ -89,8 +89,7 @@ class ShellViewModel(private val catalog: CatalogRepository) : ViewModel() {
 
 /** Fixed top-right header: secondary refresh button ("Updated: ...") and the clock. Does not scroll with content. */
 @Composable
-fun AppHeader(state: ShellUiState, onRefresh: () -> Unit, modifier: Modifier = Modifier) {
-    val now = rememberNow()
+fun AppHeader(state: ShellUiState, onRefresh: () -> Unit, modifier: Modifier = Modifier, now: Instant = rememberNow()) {
     Row(
         modifier.height(HeaderHeight).padding(end = 36.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -104,8 +103,6 @@ fun AppHeader(state: ShellUiState, onRefresh: () -> Unit, modifier: Modifier = M
 @Composable
 private fun RefreshButton(state: ShellUiState, now: Instant, onClick: () -> Unit) {
     FocusBox(onClick = onClick) { focused ->
-        val spin = rememberInfiniteTransition(label = "refresh")
-        val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(800, easing = LinearEasing), RepeatMode.Restart), label = "angle")
         val text = if (state.refreshing) stringResource(R.string.refreshing)
         else stringResource(R.string.refresh_state, updatedLabel(state.updated, now, ZoneId.systemDefault()).label())
         Row(
@@ -115,10 +112,18 @@ private fun RefreshButton(state: ShellUiState, now: Instant, onClick: () -> Unit
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            QIcon(R.drawable.ic_refresh, QColors.Foreground, Modifier.rotate(if (state.refreshing) angle else 0f), size = 13.dp)
+            if (state.refreshing) SpinningRefreshIcon() else QIcon(R.drawable.ic_refresh, QColors.Foreground, size = 13.dp)
             Text(text, style = QType.chip.copy(fontSize = 11.sp, fontWeight = FontWeight.Normal), color = QColors.Foreground, maxLines = 1, softWrap = false)
         }
     }
+}
+
+/** Only composed while refreshing, so no animation runs (and costs frames) the rest of the time. */
+@Composable
+private fun SpinningRefreshIcon() {
+    val spin = rememberInfiniteTransition(label = "refresh")
+    val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(800, easing = LinearEasing), RepeatMode.Restart), label = "angle")
+    QIcon(R.drawable.ic_refresh, QColors.Foreground, Modifier.rotate(angle), size = 13.dp)
 }
 
 private class RailItem(val route: String, @StringRes val label: Int, @DrawableRes val icon: Int)
