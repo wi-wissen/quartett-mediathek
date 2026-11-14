@@ -53,4 +53,85 @@
     <string name="player_available_until">available until %1$s</string>
     <string name="player_step_seconds">%1$d s</string>
     <string name="player_step_minutes">%1$d min</string>
+    <!-- tv ui -->
+    <string name="action_continue_episode">Continue · Episode %1$d</string>
+    <string name="action_play_episode">Play · Episode %1$d</string>
+    <string name="action_play_duration">Play · %1$s</string>
+    <string name="action_done">Done</string>
+
+    <string name="age_just_now">just now</string>
+    <string name="age_hours">%1$d hr. ago</string>
+    <string name="age_yesterday">yesterday</string>
+    <string name="age_days">%1$d days ago</string>
+    <string name="age_one_week">1 week ago</string>
+    <string name="age_weeks">%1$d weeks ago</string>
+
+    <string name="updated_never">never</string>
+    <string name="updated_today">today, %1$s</string>
+    <string name="updated_yesterday">yesterday, %1$s</string>
+
+    <string name="available_until">available until %1$s</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="badge_hd">HD</string>
+    <string name="badge_subtitles">UT</string>
+    <string name="badge_new_count">%1$d NEW</string>
+    <string name="badge_seen">SEEN</string>
+    <string name="badge_seen_lower">watched</string>
+    <string name="episode_count">%1$d episodes</string>
+    <string name="meta_subscribed">subscribed</string>
+    <string name="new_episodes_count">%1$d new episodes</string>
+    <string name="newest_first">newest first</string>
+    <string name="error_load">This content could not be loaded.</string>
+
+    <string name="row_episodes">Episodes</string>
+    <string name="row_more_episodes">More episodes</string>
+    <string name="row_more_from">More from %1$s</string>
+    <string name="filter_all_broadcasters">All channels</string>
+
+    <string name="avatar_all">All</string>
+    <string name="avatar_all_subscriptions">All subscriptions</string>
+    <string name="subscriptions_all_episodes">All episodes</string>
+    <string name="subscriptions_newest_first">newest first</string>
+    <string name="subscriptions_empty">You have no subscriptions yet. Open a show and choose Subscribe, or hold OK on a tile.</string>
+    <string name="watchlist_count">%1$d entries from all media libraries</string>
+    <string name="watchlist_empty">Nothing saved yet. Hold OK on a tile and choose Add to watchlist.</string>
+
+    <string name="key_space">Space</string>
+    <string name="key_delete">Delete</string>
+    <string name="search_hint">Searches all four media libraries via MediathekViewWeb.</string>
+    <string name="search_all_shows">All shows</string>
+    <string name="search_results_for">Results for “%1$s”</string>
+    <string name="search_searching">Searching …</string>
+    <string name="search_empty">No show and no episode with this name.</string>
+
+    <string name="menu_subscribe">Subscribe to show</string>
+    <string name="menu_unsubscribe">Unsubscribe</string>
+    <string name="menu_bookmark_show">Add show to watchlist</string>
+    <string name="menu_bookmark_episode">Add episode to watchlist</string>
+    <string name="menu_remove_bookmark">Remove from watchlist</string>
+    <string name="menu_mark_watched">Mark as watched</string>
+    <string name="menu_mark_unwatched">Mark as unwatched</string>
+
+    <string name="subscription_dialog_subtitle">%1$s · topic exactly “%1$s” on %2$s</string>
+    <string name="sub_opt_full">Only full episodes</string>
+    <string name="sub_opt_full_desc">Hide clips and excerpts under 20 minutes</string>
+    <string name="sub_opt_related">Also related topics of “%1$s”</string>
+    <string name="sub_opt_related_desc">“Spezial”, “Talk” and “Doku” topics with the same name</string>
+    <string name="sub_opt_ad">Version with audio description</string>
+    <string name="sub_opt_dgs">Version with sign language</string>
+    <string name="sub_opt_variant_desc">Show instead of the standard version when it exists</string>
+    <string name="sub_expression">Search expression:</string>
+
+    <string name="settings_start_title">Show when the app opens</string>
+    <string name="start_home">Home</string>
+    <string name="start_home_desc">Continue watching, new episodes, watchlist and the broadcasters\' recommendations</string>
+    <string name="start_subscriptions">Subscriptions</string>
+    <string name="start_subscriptions_desc">Only episodes of your subscribed shows, newest first</string>
+    <string name="start_bookmarks">Watchlist</string>
+    <string name="start_bookmarks_desc">Everything you saved from all four media libraries</string>
+    <string name="settings_data_title">Data</string>
+    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_clear_cache_desc">New episodes and recommendations are loaded once a day, or by hand at the top right. Until new data arrives, the old stays visible. Thumbnails stay stored.</string>
+    <string name="settings_cache_cleared">Cache cleared. Data is loaded again on the next refresh.</string>
+    <string name="settings_note">The progress of every episode is stored on this TV. On Home you can resume the last watched episode directly.</string>
 </resources>

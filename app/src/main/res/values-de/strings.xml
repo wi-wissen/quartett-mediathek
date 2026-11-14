@@ -50,4 +50,85 @@
     <string name="player_available_until">verfügbar bis %1$s</string>
     <string name="player_step_seconds">%1$d s</string>
     <string name="player_step_minutes">%1$d Min.</string>
+    <!-- tv ui -->
+    <string name="action_continue_episode">Weiterschauen · Folge %1$d</string>
+    <string name="action_play_episode">Abspielen · Folge %1$d</string>
+    <string name="action_play_duration">Abspielen · %1$s</string>
+    <string name="action_done">Fertig</string>
+
+    <string name="age_just_now">gerade eben</string>
+    <string name="age_hours">vor %1$d Std.</string>
+    <string name="age_yesterday">gestern</string>
+    <string name="age_days">vor %1$d Tagen</string>
+    <string name="age_one_week">vor 1 Woche</string>
+    <string name="age_weeks">vor %1$d Wochen</string>
+
+    <string name="updated_never">nie</string>
+    <string name="updated_today">heute, %1$s</string>
+    <string name="updated_yesterday">gestern, %1$s</string>
+
+    <string name="available_until">verfügbar bis %1$s</string>
+    <string name="duration_minutes">%1$d Min.</string>
+    <string name="badge_hd">HD</string>
+    <string name="badge_subtitles">UT</string>
+    <string name="badge_new_count">%1$d NEU</string>
+    <string name="badge_seen">GESEHEN</string>
+    <string name="badge_seen_lower">gesehen</string>
+    <string name="episode_count">%1$d Folgen</string>
+    <string name="meta_subscribed">abonniert</string>
+    <string name="new_episodes_count">%1$d neue Folgen</string>
+    <string name="newest_first">neueste zuerst</string>
+    <string name="error_load">Dieser Inhalt konnte nicht geladen werden.</string>
+
+    <string name="row_episodes">Folgen</string>
+    <string name="row_more_episodes">Weitere Folgen</string>
+    <string name="row_more_from">Mehr von %1$s</string>
+    <string name="filter_all_broadcasters">Alle Sender</string>
+
+    <string name="avatar_all">Alle</string>
+    <string name="avatar_all_subscriptions">Alle Abos</string>
+    <string name="subscriptions_all_episodes">Alle Folgen</string>
+    <string name="subscriptions_newest_first">neueste zuerst</string>
+    <string name="subscriptions_empty">Du hast noch keine Abos. Öffne eine Sendung und wähle Abonnieren oder halte OK auf einer Kachel gedrückt.</string>
+    <string name="watchlist_count">%1$d Einträge aus allen Mediatheken</string>
+    <string name="watchlist_empty">Noch nichts gemerkt. Halte OK auf einer Kachel gedrückt und wähle Merken.</string>
+
+    <string name="key_space">Leerzeichen</string>
+    <string name="key_delete">Löschen</string>
+    <string name="search_hint">Durchsucht alle vier Mediatheken über MediathekViewWeb.</string>
+    <string name="search_all_shows">Alle Sendungen</string>
+    <string name="search_results_for">Treffer für „%1$s“</string>
+    <string name="search_searching">Suche läuft …</string>
+    <string name="search_empty">Keine Sendung und keine Folge mit diesem Namen.</string>
+
+    <string name="menu_subscribe">Sendung abonnieren</string>
+    <string name="menu_unsubscribe">Abo beenden</string>
+    <string name="menu_bookmark_show">Sendung merken</string>
+    <string name="menu_bookmark_episode">Folge merken</string>
+    <string name="menu_remove_bookmark">Von der Merkliste entfernen</string>
+    <string name="menu_mark_watched">Als gesehen markieren</string>
+    <string name="menu_mark_unwatched">Als ungesehen markieren</string>
+
+    <string name="subscription_dialog_subtitle">%1$s · Thema genau „%1$s“ bei %2$s</string>
+    <string name="sub_opt_full">Nur ganze Folgen</string>
+    <string name="sub_opt_full_desc">Clips und Ausschnitte unter 20 Minuten ausblenden</string>
+    <string name="sub_opt_related">Auch verwandte Themen von „%1$s“</string>
+    <string name="sub_opt_related_desc">Themen mit „Spezial“, „Talk“ und „Doku“ im gleichen Namen einschließen</string>
+    <string name="sub_opt_ad">Fassung mit Audiodeskription</string>
+    <string name="sub_opt_dgs">Fassung mit Gebärdensprache</string>
+    <string name="sub_opt_variant_desc">Statt der normalen Fassung zeigen, wenn es sie gibt</string>
+    <string name="sub_expression">Suchausdruck:</string>
+
+    <string name="settings_start_title">Beim Öffnen der App anzeigen</string>
+    <string name="start_home">Start</string>
+    <string name="start_home_desc">Weiterschauen, neue Folgen, Merkliste und die Empfehlungen der Sender</string>
+    <string name="start_subscriptions">Abos</string>
+    <string name="start_subscriptions_desc">Nur die Folgen deiner abonnierten Sendungen, neueste zuerst</string>
+    <string name="start_bookmarks">Merkliste</string>
+    <string name="start_bookmarks_desc">Was du dir aus allen vier Mediatheken gemerkt hast</string>
+    <string name="settings_data_title">Daten</string>
+    <string name="settings_clear_cache">Zwischenspeicher leeren</string>
+    <string name="settings_clear_cache_desc">Neue Folgen und Empfehlungen werden einmal am Tag geladen, oben rechts jederzeit von Hand. Bis neue Daten da sind, bleiben die alten sichtbar. Vorschaubilder bleiben gespeichert.</string>
+    <string name="settings_cache_cleared">Zwischenspeicher geleert. Die Daten werden beim nächsten Aktualisieren neu geladen.</string>
+    <string name="settings_note">Der Fortschritt jeder Folge wird auf dem Fernseher gespeichert. Auf der Startseite kannst du die zuletzt gesehene Folge direkt fortsetzen.</string>
 </resources>
