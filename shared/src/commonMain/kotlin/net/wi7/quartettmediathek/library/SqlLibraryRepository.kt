@@ -75,7 +75,7 @@ class SqlLibraryRepository(
         emptyList()
     }
 
-    private fun watchedKeys(): Flow<Set<String>> =
+    override fun watchedKeys(): Flow<Set<String>> =
         q.watchedKeys().asFlow().mapToList(dispatcher).map { it.toSet() }
 
     override suspend fun subscribe(show: Show) {

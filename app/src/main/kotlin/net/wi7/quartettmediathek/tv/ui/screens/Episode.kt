@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.ui.screens
 
+import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,7 +107,7 @@ class EpisodeViewModel(
     }
 
     val state: StateFlow<EpisodeUiState> = combine(
-        loaded, library.overlay(), library.progress(ref), library.isBookmarked("ep:${ref.key}"),
+        loaded, library.overlay(), library.progress(ref), library.isBookmarked(LibraryKeys.bookmark(ref)),
     ) { l, overlay, progress, bookmarked ->
         if (l == null) EpisodeUiState() else EpisodeUiState(
             loaded = true, episode = l.episode, failed = l.episode == null, progress = progress, bookmarked = bookmarked,

@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.player
 
+import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.NonCancellable
@@ -122,6 +123,6 @@ class PlayerViewModel(
 
     companion object {
         /** Watchlist key of an episode; the rest of the UI must use the same format. */
-        fun bookmarkKey(ref: EpisodeRef) = "ep:${ref.source.name}:${ref.key}"
+        fun bookmarkKey(ref: EpisodeRef) = LibraryKeys.bookmark(ref)
     }
 }

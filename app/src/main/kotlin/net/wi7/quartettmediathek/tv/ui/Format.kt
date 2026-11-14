@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.ui
 
+import net.wi7.quartettmediathek.library.LibraryKeys
 import java.time.ZoneId
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -71,10 +72,7 @@ fun updatedLabel(updated: Instant?, now: Instant, zone: ZoneId): UpdatedLabel {
 }
 
 /** Stable key of a teaser, also the key format of bookmarks. */
-fun Teaser.key(): String = when (this) {
-    is Teaser.OfShow -> "show:${show.ref.key}"
-    is Teaser.OfEpisode -> "ep:${episode.ref.key}"
-}
+fun Teaser.key(): String = LibraryKeys.bookmark(this)
 
 fun Teaser.broadcaster(): Broadcaster = when (this) {
     is Teaser.OfShow -> show.broadcaster

@@ -56,6 +56,9 @@ interface LibraryRepository {
     fun isBookmarked(key: String): Flow<Boolean>
     suspend fun toggleBookmark(teaser: Teaser)
 
+    /** Episodes marked as watched, as `LibraryKeys.episode(ref)` ("SOURCE:key"). */
+    fun watchedKeys(): Flow<Set<String>>
+
     fun continueWatching(): Flow<List<Progress>>
     fun progress(ref: EpisodeRef): Flow<Progress?>
     suspend fun saveProgress(episode: Episode, positionSeconds: Long)

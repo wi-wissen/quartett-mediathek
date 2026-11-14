@@ -10,6 +10,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
+import net.wi7.quartettmediathek.tv.player.LocalPlayerDependencies
+import net.wi7.quartettmediathek.tv.player.PlayerDependencies
 import kotlinx.coroutines.flow.first
 import net.wi7.quartettmediathek.tv.di.LocalAppContainer
 import net.wi7.quartettmediathek.tv.navigation.AppShell
@@ -23,7 +25,10 @@ class MainActivity : ComponentActivity() {
         val container = (application as QuartettApp).container
         setContent {
             QuartettTheme {
-                CompositionLocalProvider(LocalAppContainer provides container) {
+                CompositionLocalProvider(
+                    LocalAppContainer provides container,
+                    LocalPlayerDependencies provides PlayerDependencies(container.catalog, container.library, container.playback),
+                ) {
                     // The start destination is the user's start screen; wait for it before building the NavHost.
                     val start by produceState<String?>(null) {
                         value = Routes.forStartScreen(container.settings.startScreen().first())

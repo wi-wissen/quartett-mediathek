@@ -2,6 +2,8 @@ package net.wi7.quartettmediathek.tv.di
 
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
+import net.wi7.quartettmediathek.data.QuartettGraph
+import net.wi7.quartettmediathek.platform.DatabaseDriverFactory
 import net.wi7.quartettmediathek.repository.CatalogRepository
 import net.wi7.quartettmediathek.repository.LibraryRepository
 import net.wi7.quartettmediathek.repository.PlaybackRepository
@@ -27,19 +29,13 @@ class FakeAppContainer : AppContainer {
     override val settings: SettingsRepository = FakeSettingsRepository()
 }
 
-/**
- * Wires the repositories for the app.
- * TODO(integration): replace the fakes with the real implementations from the shared module once they exist
- *  (one instance each, created lazily from the application context); nothing else in the UI needs to change.
- */
+/** The real data layer from the shared module (network, cache, local database). */
 class DefaultAppContainer(context: Context) : AppContainer {
-    @Suppress("unused")
-    private val appContext = context.applicationContext
-    private val fakes = FakeAppContainer()
-    override val catalog: CatalogRepository get() = fakes.catalog
-    override val library: LibraryRepository get() = fakes.library
-    override val playback: PlaybackRepository get() = fakes.playback
-    override val settings: SettingsRepository get() = fakes.settings
+    private val graph = QuartettGraph(DatabaseDriverFactory(context.applicationContext))
+    override val catalog: CatalogRepository = graph.catalog
+    override val library: LibraryRepository = graph.library
+    override val playback: PlaybackRepository = graph.playback
+    override val settings: SettingsRepository = graph.settings
 }
 
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("No AppContainer provided") }

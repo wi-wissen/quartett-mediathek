@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.ui.screens
 
+import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -101,7 +102,7 @@ class ShowViewModel(
     }
 
     val state: StateFlow<ShowUiState> = combine(
-        loaded, library.overlay(), library.subscriptionFor(ref), library.isBookmarked("show:${ref.key}"),
+        loaded, library.overlay(), library.subscriptionFor(ref), library.isBookmarked(LibraryKeys.bookmark(ref)),
     ) { l, overlay, subscription, bookmarked ->
         if (l == null) ShowUiState() else {
             val tiles = l.episodes.map { overlay.decorate(it) }

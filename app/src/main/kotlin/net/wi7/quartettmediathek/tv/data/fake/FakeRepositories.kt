@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.data.fake
 
+import net.wi7.quartettmediathek.library.LibraryKeys
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -124,6 +125,9 @@ class FakeLibraryRepository : LibraryRepository {
     override suspend fun toggleBookmark(teaser: Teaser) {
         bookmarks.update { list -> if (list.any { it.key() == teaser.key() }) list.filterNot { it.key() == teaser.key() } else listOf(teaser) + list }
     }
+
+    override fun watchedKeys(): Flow<Set<String>> =
+        progress.map { all -> all.values.filter { it.watched }.map { LibraryKeys.episode(it.episode.ref) }.toSet() }
 
     override fun continueWatching(): Flow<List<Progress>> = progress.map { it.values.sortedByDescending { p -> p.updatedAt } }
     override fun progress(ref: EpisodeRef): Flow<Progress?> = progress.map { it[ref.key] }
