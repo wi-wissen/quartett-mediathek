@@ -177,7 +177,9 @@ class LiveBackendTest {
     }
 
     private suspend fun assertPlayable(stream: StreamInfo, where: String) {
-        val response: HttpResponse = http.get(stream.url) { header("Range", "bytes=0-2047") }
+        val isHls = stream.mimeType.contains("mpegurl", ignoreCase = true)
+        // Manifests are small and fetched whole; for video files only the first bytes are requested.
+        val response: HttpResponse = http.get(stream.url) { if (!isHls) header("Range", "bytes=0-2047") }
         val status = response.status.value
         if (status == 403 && "/dach/" in stream.url) {
             // Geo-restricted to Germany/Austria/Switzerland; CI and this container are elsewhere. Resolution was checked.
@@ -185,8 +187,8 @@ class LiveBackendTest {
             return
         }
         assertTrue(status == 200 || status == 206, "$where: stream answers HTTP $status (${stream.url})")
-        if (stream.mimeType.contains("mpegurl", ignoreCase = true)) {
-            assertTrue(response.bodyAsText().startsWith("#EXTM3U"), "$where: HLS manifest does not start with #EXTM3U")
+        if (isHls) {
+            assertTrue(response.bodyAsText().trimStart('\uFEFF', ' ', '\n', '\r').startsWith("#EXTM3U"), "$where: HLS manifest does not start with #EXTM3U")
         } else {
             val type = response.contentType()?.toString().orEmpty()
             assertTrue(type.startsWith("video/") || type.contains("octet-stream"), "$where: stream content type is '$type'")
