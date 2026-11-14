@@ -14,7 +14,7 @@ data class FeedCandidate(val episode: Episode, val videoUrl: String? = null, val
 
 /**
  * One logical episode with all its variants. [episode] is the representation chosen for the preferred variant
- * (its `variants` holds every variant that exists); [representations] has the concrete episode per variant.
+ * (its `variants` holds every variant that exists, its `versionRefs` where each one lives); [representations] has the concrete episode per variant.
  */
 data class MergedEpisode(val episode: Episode, val representations: Map<Variant, Episode>)
 
@@ -120,7 +120,8 @@ object EpisodeMerger {
             val reps = LinkedHashMap<Variant, Episode>()
             for (item in cluster) for (v in item.variants) reps.getOrPut(v) { item.episode }
             val all = reps.keys.toSet()
-            val finalReps = reps.mapValues { (_, e) -> e.copy(variants = all) }
+            val refs = reps.mapValues { (_, e) -> e.ref }
+            val finalReps = reps.mapValues { (_, e) -> e.copy(variants = all, versionRefs = refs) }
             MergedEpisode(pick(finalReps, preferredVariant), finalReps)
         }.sortedByDescending { it.episode.publishedAt }
     }

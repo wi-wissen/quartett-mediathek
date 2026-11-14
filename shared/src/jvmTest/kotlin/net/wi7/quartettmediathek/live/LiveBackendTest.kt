@@ -79,6 +79,22 @@ class LiveBackendTest {
     }
 
     @Test
+    fun versionsOfAnEpisodeResolveToStreamsAfterRestart() = live { app ->
+        val first = app.graph.catalog.search("ringe der macht").filterIsInstance<Teaser.OfEpisode>().first().episode
+        log("versions of '${first.title}': ${first.versionRefs}")
+        assertTrue(Variant.ORIGINAL_VERSION in first.versionRefs, "no original version ref for '${first.title}': ${first.versionRefs}")
+        assertTrue(Variant.AUDIO_DESCRIPTION in first.versionRefs, "no audio description ref for '${first.title}': ${first.versionRefs}")
+        val restarted = app.restart()
+        for (variant in listOf(Variant.STANDARD, Variant.ORIGINAL_VERSION, Variant.AUDIO_DESCRIPTION)) {
+            val ref = first.versionRefs[variant] ?: fail("no ref for $variant")
+            val stream = runCatching { restarted.graph.playback.stream(ref, variant) }
+                .getOrElse { fail("version $variant ($ref) has no stream after restart: ${it.message}") }
+            assertPlayable(stream, "version $variant of '${first.title}'")
+            log("ok version $variant of '${first.title}': $ref -> ${stream.mimeType} ${stream.height ?: ""}p")
+        }
+    }
+
+    @Test
     fun subscriptionFeedOpensAndPlaysAfterRestart() = live { searchApp ->
         val show = searchApp.graph.catalog.search("die anstalt").filterIsInstance<Teaser.OfShow>().first().show
         // Fresh database: nothing from the search may help, like a feed loaded days later.

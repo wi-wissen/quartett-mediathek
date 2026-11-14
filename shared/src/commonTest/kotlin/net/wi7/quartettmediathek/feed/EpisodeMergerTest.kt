@@ -114,4 +114,22 @@ class EpisodeMergerTest {
         assertEquals("Schatten und Flammen", merged.single().episode.title)
         assertEquals(setOf(Variant.STANDARD, Variant.AUDIO_DESCRIPTION, Variant.ORIGINAL_VERSION), merged.single().episode.variants)
     }
+
+    @Test
+    fun mergedEpisodeKnowsTheRefOfEveryVersion() {
+        val show = "Der Herr der Ringe: Die Ringe der Macht"
+        val at = "2026-10-30T07:00:00Z"
+        val list = listOf(
+            candidate("ad", show, "Schatten und Flammen (S02/E08) (Audiodeskription)", Broadcaster.ZDF, at, 67, "https://cdn/a5a6.mp4", 942_000_000),
+            candidate("en", show, "Schatten und Flammen (S02/E08) (Englisch)", Broadcaster.ZDF, at, 67, "https://cdn/a3a4.mp4", 942_000_000),
+            candidate("de", show, "Schatten und Flammen (S02/E08)", Broadcaster.ZDF, at, 67, "https://cdn/a1a2.mp4", 942_000_000),
+        )
+        val merged = EpisodeMerger.merge(list).single()
+        val expected = mapOf(Variant.STANDARD to "de", Variant.ORIGINAL_VERSION to "en", Variant.AUDIO_DESCRIPTION to "ad")
+        assertEquals(expected, merged.episode.versionRefs.mapValues { it.value.key })
+        // every representation carries the same refs, so switching works whichever version was picked
+        val preferAd = EpisodeMerger.merge(list, Variant.AUDIO_DESCRIPTION).single().episode
+        assertEquals("ad", preferAd.ref.key)
+        assertEquals(expected, preferAd.versionRefs.mapValues { it.value.key })
+    }
 }

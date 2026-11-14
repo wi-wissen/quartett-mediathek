@@ -7,6 +7,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import net.wi7.quartettmediathek.cache.CachePolicy
 import net.wi7.quartettmediathek.cache.CacheStore
+import net.wi7.quartettmediathek.feed.EpisodeMerger
 import net.wi7.quartettmediathek.feed.FeedCandidate
 import net.wi7.quartettmediathek.network.parseJson
 import net.wi7.quartettmediathek.source.mvw.MvwClause
@@ -47,7 +48,11 @@ class MvwFeedProvider(
         if (force) forceNext = false
         index.rememberMvw(entries)
         withImages(subscription, entries.mapNotNull { e -> e.toEpisode()?.let { FeedCandidate(it, e.urlVideo, e.size) } })
-            .also { candidates -> index.rememberEpisodes(candidates.map { it.episode }) }
+            .also { candidates ->
+                index.rememberEpisodes(candidates.map { it.episode })
+                // The merged representations know the refs of all versions (player version switch).
+                index.rememberEpisodes(EpisodeMerger.mergeVariants(candidates).flatMap { it.representations.values })
+            }
     }
 
     /**

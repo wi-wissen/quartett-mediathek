@@ -69,6 +69,11 @@ data class Episode(
     val variants: Set<Variant> = setOf(Variant.STANDARD),
     val maxHeight: Int? = null,
     val websiteUrl: String? = null,
+    /**
+     * Where each version of this episode lives (set when separate files exist per version, e.g. MediathekViewWeb:
+     * standard, English, audio description). Empty for sources that deliver one entry per episode.
+     */
+    val versionRefs: Map<Variant, EpisodeRef> = emptyMap(),
 )
 
 /** Something a row on Home/Discover can show: either a whole show or a single episode. */

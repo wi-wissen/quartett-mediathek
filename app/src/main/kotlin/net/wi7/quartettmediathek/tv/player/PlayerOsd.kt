@@ -65,6 +65,9 @@ data class OsdModel(
     val seekHint: String?,
     val playing: Boolean,
     val speedLabel: String,
+    /** The version button is only shown when there is more than one version. */
+    val versionAvailable: Boolean,
+    val versionLabel: String,
     val subtitlesAvailable: Boolean,
     val subtitlesLabel: String,
     val bookmarked: Boolean,
@@ -76,6 +79,7 @@ data class OsdModel(
 class OsdActions(
     val onPlayPause: () -> Unit,
     val onSpeed: () -> Unit,
+    val onVersion: () -> Unit,
     val onSubtitles: () -> Unit,
     val onBookmark: () -> Unit,
     val onNext: () -> Unit,
@@ -198,6 +202,7 @@ private fun Buttons(model: OsdModel, actions: OsdActions, playPauseFocus: FocusR
             label = null, onClick = actions.onPlayPause, modifier = Modifier.focusRequester(playPauseFocus),
         )
         Spacer(Modifier.weight(1f))
+        if (model.versionAvailable) PillButton(R.drawable.ic_translate, model.versionLabel, actions.onVersion)
         PillButton(R.drawable.ic_speed, model.speedLabel, actions.onSpeed)
         if (model.subtitlesAvailable) {
             PillButton(R.drawable.ic_closed_caption, model.subtitlesLabel, actions.onSubtitles)

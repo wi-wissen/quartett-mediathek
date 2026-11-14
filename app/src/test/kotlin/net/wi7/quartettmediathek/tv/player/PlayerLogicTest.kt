@@ -10,6 +10,7 @@ import net.wi7.quartettmediathek.model.Broadcaster
 import net.wi7.quartettmediathek.model.Episode
 import net.wi7.quartettmediathek.model.EpisodeRef
 import net.wi7.quartettmediathek.model.SourceId
+import net.wi7.quartettmediathek.model.StreamInfo
 import net.wi7.quartettmediathek.model.Variant
 
 class PlayerLogicTest {
@@ -75,5 +76,56 @@ class PlayerLogicTest {
         assertEquals("1:02:03", PlayerLogic.formatTime(3723))
         assertEquals("+7:20 · 1 min", PlayerLogic.seekHint(440, "1 min"))
         assertEquals("−0:10", PlayerLogic.seekHint(-10, null))
+    }
+
+    private fun mvw(key: String) = EpisodeRef(SourceId.MVW, key)
+    private fun stream(vararg audio: String) = StreamInfo("https://x/v.mp4", "video/mp4", 720, audioTracks = audio.toList())
+    private val files = mapOf(
+        Variant.AUDIO_DESCRIPTION to mvw("ad"), Variant.STANDARD to mvw("de"), Variant.ORIGINAL_VERSION to mvw("en"),
+    )
+
+    @Test fun separateFilesAreOfferedInChooserOrder() {
+        val options = PlayerLogic.versionOptions(files, mvw("de"), stream())
+        assertEquals(listOf(Variant.STANDARD, Variant.ORIGINAL_VERSION, Variant.AUDIO_DESCRIPTION), options.map { it.variant })
+        assertEquals(listOf("de", "en", "ad"), options.map { it.ref.key })
+        assertTrue(options.none { it.audioTrack })
+    }
+
+    @Test fun aFileForAudioDescriptionWinsOverTheStreamTrack() {
+        val options = PlayerLogic.versionOptions(files, mvw("de"), stream("main", "ad"))
+        assertEquals(3, options.size)
+        assertTrue(options.none { it.audioTrack })
+    }
+
+    @Test fun zdfAudioTrackOffersStandardAndAudioDescriptionOnTheSameStream() {
+        val played = EpisodeRef(SourceId.ZDF, "zdf-1")
+        val options = PlayerLogic.versionOptions(emptyMap(), played, stream("main", "ad"))
+        assertEquals(listOf(Variant.STANDARD, Variant.AUDIO_DESCRIPTION), options.map { it.variant })
+        assertTrue(options.all { it.audioTrack && it.ref == played })
+    }
+
+    @Test fun nothingToChooseWithASingleVersion() {
+        assertTrue(PlayerLogic.versionOptions(emptyMap(), mvw("de"), stream()).isEmpty())
+        assertEquals(1, PlayerLogic.versionOptions(mapOf(Variant.STANDARD to mvw("de")), mvw("de"), stream()).size)
+    }
+
+    @Test fun signLanguageComesLast() {
+        val refs = files + (Variant.SIGN_LANGUAGE to mvw("dgs"))
+        assertEquals(Variant.SIGN_LANGUAGE, PlayerLogic.versionOptions(refs, mvw("de"), stream()).last().variant)
+    }
+
+    @Test fun activeVersionFollowsThePlayedRefOrTheAdTrack() {
+        assertEquals(Variant.ORIGINAL_VERSION, PlayerLogic.activeVersion(files, mvw("en"), Variant.STANDARD, stream()))
+        // MediathekViewWeb standard entry resolved through ZDF (has an ad track) but a file for AD exists: still standard
+        assertEquals(Variant.STANDARD, PlayerLogic.activeVersion(files, mvw("de"), Variant.AUDIO_DESCRIPTION, stream("main", "ad")))
+        assertEquals(Variant.AUDIO_DESCRIPTION, PlayerLogic.activeVersion(emptyMap(), mvw("z"), Variant.AUDIO_DESCRIPTION, stream("main", "ad")))
+        assertEquals(Variant.STANDARD, PlayerLogic.activeVersion(emptyMap(), mvw("z"), Variant.AUDIO_DESCRIPTION, stream("main")))
+    }
+
+    @Test fun nextVersionCycles() {
+        val options = PlayerLogic.versionOptions(files, mvw("de"), stream())
+        assertEquals(Variant.ORIGINAL_VERSION, PlayerLogic.nextVersion(options, Variant.STANDARD)?.variant)
+        assertEquals(Variant.STANDARD, PlayerLogic.nextVersion(options, Variant.AUDIO_DESCRIPTION)?.variant)
+        assertNull(PlayerLogic.nextVersion(emptyList(), Variant.STANDARD))
     }
 }
