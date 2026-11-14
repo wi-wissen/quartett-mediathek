@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import net.wi7.quartettmediathek.cache.CacheStore
 import net.wi7.quartettmediathek.db.QuartettDatabase
 import net.wi7.quartettmediathek.library.SqlLibraryRepository
@@ -29,7 +30,7 @@ class QuartettGraph(
 ) {
     private val db = QuartettDatabase(driverFactory.create())
     private val cache = CacheStore(db)
-    private val index = ContentIndex()
+    private val index = ContentIndex(db)
 
     private val ard = ArdClient(http)
     private val zdf = ZdfClient(http)
@@ -57,4 +58,9 @@ class QuartettGraph(
     val playback: PlaybackRepository = DefaultPlaybackRepository(ard, zdf, arte, mvw, index, catalog)
 
     val settings: SettingsRepository = SqlSettingsRepository(db)
+
+    init {
+        // Keep the content cache bounded (entries unused for 90 days, at most 20 000 items).
+        scope.launch { runCatching { index.prune() } }
+    }
 }

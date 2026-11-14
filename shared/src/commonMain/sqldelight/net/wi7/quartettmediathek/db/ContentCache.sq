@@ -1,0 +1,33 @@
+-- Shows, episodes and raw MediathekViewWeb hits the app has seen, so pages open instantly after a restart.
+-- Pruned by last use (see ContentIndex.prune); the library keeps its own snapshots independently.
+
+CREATE TABLE content_item (
+    -- "show", "episode" or "mvw"
+    kind TEXT NOT NULL,
+    item_key TEXT NOT NULL,
+    json TEXT NOT NULL,
+    last_used_epoch_ms INTEGER NOT NULL,
+    PRIMARY KEY (kind, item_key)
+);
+
+CREATE INDEX content_item_last_used ON content_item(last_used_epoch_ms);
+
+contentItem:
+SELECT json FROM content_item WHERE kind = ? AND item_key = ?;
+
+putContentItem:
+INSERT OR REPLACE INTO content_item(kind, item_key, json, last_used_epoch_ms) VALUES (?, ?, ?, ?);
+
+touchContentItem:
+UPDATE content_item SET last_used_epoch_ms = ? WHERE kind = ? AND item_key = ?;
+
+pruneContentOlderThan:
+DELETE FROM content_item WHERE last_used_epoch_ms < ?;
+
+pruneContentBeyond:
+DELETE FROM content_item WHERE rowid IN (
+    SELECT rowid FROM content_item ORDER BY last_used_epoch_ms DESC LIMIT -1 OFFSET ?
+);
+
+countContentItems:
+SELECT count(*) FROM content_item;

@@ -1,0 +1,10 @@
+-- Version 1 -> 2: content cache for shows, episodes and MediathekViewWeb hits (see ContentCache.sq).
+CREATE TABLE IF NOT EXISTS content_item (
+    kind TEXT NOT NULL,
+    item_key TEXT NOT NULL,
+    json TEXT NOT NULL,
+    last_used_epoch_ms INTEGER NOT NULL,
+    PRIMARY KEY (kind, item_key)
+);
+
+CREATE INDEX IF NOT EXISTS content_item_last_used ON content_item(last_used_epoch_ms);

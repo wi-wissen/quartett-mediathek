@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.source.mvw
 
+import kotlinx.serialization.Serializable
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -17,6 +18,7 @@ import net.wi7.quartettmediathek.network.string
 import net.wi7.quartettmediathek.source.SourceException
 
 /** Raw MediathekViewWeb hit, all fields of SPEC 2.1. */
+@Serializable
 data class MvwEntry(
     val id: String,
     val channel: String,
