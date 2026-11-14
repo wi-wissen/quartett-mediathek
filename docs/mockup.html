@@ -1,0 +1,794 @@
+<title>Quartett Mediathek Mockup</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: page = header + 16:9 TV stage (1920x1080, scaled to fit) + virtual remote. Deliberately single dark look, like a TV UI. */
+:root{
+  --bg:#0c1013; --surface:#151b20; --surface2:#1f272e; --line:#2b353d;
+  --fg:#eef2f4; --muted:#93a1aa; --accent:#f4b63f; --accent-ink:#231a05; --focus:#ffffff;
+  --ard:#4c7fe0; --zdf:#ef8a2a; --s3:#c4478f; --arte:#e0573e;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
+.page{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.intro{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:flex-end;justify-content:space-between}
+.intro h1{font-family:var(--display);font-size:clamp(28px,4vw,40px);margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+.intro p{margin:6px 0 0;color:var(--muted);max-width:62ch;line-height:1.5;font-size:15px}
+.names{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+.names span{border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--muted)}
+.names span.on{border-color:var(--accent);color:var(--fg)}
+.wrap{width:100%;aspect-ratio:16/9;max-width:100%;position:relative;overflow:hidden;border-radius:14px;background:#000;box-shadow:0 0 0 1px var(--line),0 30px 60px -30px #000}
+#stage{width:1920px;height:1080px;position:absolute;left:0;top:0;transform-origin:0 0;background:var(--bg);overflow:hidden;font-size:24px}
+.below{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-start;justify-content:space-between}
+.remote{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.dpad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:4px}
+.rb{background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:10px;font:600 14px var(--body);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.rb:hover{border-color:var(--muted)}
+.rb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rb.ok{border-radius:50%;background:var(--surface);font-size:13px}
+.side{display:flex;flex-direction:column;gap:6px}
+.side .rb{padding:9px 14px}
+.hints{color:var(--muted);font-size:13.5px;line-height:1.7;max-width:46ch}
+.hints kbd{font:600 12px var(--body);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--fg)}
+.jump{display:flex;flex-wrap:wrap;gap:8px}
+.jump .rb{padding:8px 12px;font-weight:500}
+.label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+
+/* ---------- TV ---------- */
+#rail{position:absolute;left:0;top:0;bottom:0;width:120px;padding:140px 0 0 22px;display:flex;flex-direction:column;gap:10px;z-index:5;transition:width .18s ease,background .18s ease}
+#rail.open{width:360px;background:linear-gradient(90deg,#0c1013 72%,rgba(12,16,19,0))}
+.ri{display:flex;align-items:center;gap:22px;height:68px;width:76px;border-radius:34px;padding:0 20px;color:var(--muted);white-space:nowrap;overflow:hidden;cursor:pointer;transition:width .18s ease}
+#rail.open .ri{width:290px}
+.ri svg{flex:none;width:34px;height:34px}
+.ri span{font-size:27px;font-weight:600;opacity:0;transition:opacity .12s}
+#rail.open .ri span{opacity:1}
+.ri.active{color:var(--fg)}
+.ri.active::after{content:"";position:absolute;left:8px;width:5px;height:34px;border-radius:3px;background:var(--accent)}
+#rail.open .ri.active::after{display:none}
+.ri.focused{background:var(--focus);color:#0c1013}
+#main{position:absolute;left:120px;right:0;top:0;bottom:0}
+.vscroll{position:absolute;inset:0;overflow:hidden;scroll-behavior:smooth}
+.topbar{height:120px;display:flex;align-items:center;justify-content:flex-end;padding:0 72px 0 48px}
+.tr{display:flex;align-items:center;gap:30px}
+.rf{display:flex;align-items:center;gap:12px;font-size:22px;color:var(--fg);background:var(--surface2);padding:12px 24px;border-radius:999px;cursor:pointer}
+.rf svg{width:26px;height:26px}
+.rf.focused{background:var(--surface2);color:var(--fg);box-shadow:0 0 0 4px var(--focus)}
+.rf.loading svg{animation:spin .8s linear infinite}
+
+.rf.spin svg{animation:spin .8s linear}
+@keyframes spin{to{transform:rotate(360deg)}}
+#hdr{position:absolute;top:0;right:0;height:120px;display:flex;align-items:center;gap:30px;padding-right:72px;z-index:6}
+.topfade{position:absolute;left:0;right:0;top:0;height:112px;background:linear-gradient(180deg,var(--bg) 62%,rgba(12,16,19,0));z-index:4;pointer-events:none}
+.rlogo{position:absolute;left:38px;top:36px;white-space:nowrap}
+.rlogo svg{flex:none}
+.logo{display:flex;align-items:center;gap:14px;font-family:var(--display);font-weight:700;font-size:38px;letter-spacing:-.01em}
+.clock{font-size:28px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sec{position:relative;padding-top:8px}
+.sec h2{font-family:var(--display);font-weight:600;font-size:34px;margin:0 0 0 48px;display:flex;align-items:center;gap:16px}
+.sec h2 small{font-family:var(--body);font-weight:500;font-size:22px;color:var(--muted)}
+.hrow{position:relative;display:flex;gap:30px;padding:22px 80px 34px 48px;overflow:hidden;scroll-behavior:smooth}
+.card{flex:none;width:416px;cursor:pointer;border-radius:16px;transition:transform .15s ease}
+.thumb{position:relative;width:416px;height:234px;border-radius:14px;overflow:hidden;background:#222}
+.thumb .art{position:absolute;inset:0}
+.badge{position:absolute;font-size:19px;font-weight:700;border-radius:7px;padding:3px 9px;line-height:1.2}
+.dur{right:10px;bottom:10px;background:rgba(0,0,0,.78);color:#fff;font-variant-numeric:tabular-nums}
+.new{left:10px;top:10px;background:var(--accent);color:var(--accent-ink);letter-spacing:.04em}
+.sender{left:10px;bottom:10px;color:#fff;font-size:17px;letter-spacing:.03em}
+.prog{position:absolute;left:0;right:0;bottom:0;height:7px;background:rgba(255,255,255,.28)}
+.prog i{display:block;height:100%;background:var(--accent)}
+.seen{position:absolute;inset:0;background:rgba(12,16,19,.55);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;letter-spacing:.04em}
+.ct{margin:16px 4px 0;font-size:26px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#d7dee2}
+.cm{margin:6px 4px 0;font-size:21px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm:has(.cs){display:flex}
+.cs{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf{flex:none;white-space:nowrap}
+.grid4 .ct{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu.wide{width:820px}
+.mi .tx{display:flex;flex-direction:column;gap:4px;min-width:0}
+.mi .tx small{font-size:20px;font-weight:500;color:var(--muted)}
+.mi.focused .tx small{color:#3b4650}
+.tg{margin-left:auto;flex:none;width:66px;height:38px;border-radius:19px;background:var(--line);position:relative}
+.tg::after{content:"";position:absolute;left:4px;top:4px;width:30px;height:30px;border-radius:50%;background:#cfd7dc;transition:left .15s}
+.tg.on{background:var(--accent)}
+.tg.on::after{left:32px;background:#fff}
+.expr{margin:16px 22px 0;font-size:21px;color:var(--muted)}
+.expr code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:21px;background:var(--surface2);color:var(--fg);padding:4px 10px;border-radius:6px}
+.preview{margin:18px 22px 6px;font-size:22px;color:var(--muted);line-height:1.45}
+.preview b{color:var(--fg)}
+.f.focused.card{transform:scale(1.06)}
+.f.focused .thumb{box-shadow:0 0 0 5px var(--focus),0 18px 40px -10px #000}
+.f.focused .ct{color:#fff}
+.mark{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center}
+.mark svg{width:22px;height:22px}
+
+.chips{display:flex;gap:16px;padding:16px 80px 16px 48px;overflow:hidden;position:relative;scroll-behavior:smooth}
+.chip{flex:none;font-size:24px;font-weight:600;padding:12px 26px;border-radius:999px;background:var(--surface2);color:#d7dee2;cursor:pointer}
+.chip.sel{background:#e8edf0;color:#0c1013}
+.chip.focused{box-shadow:0 0 0 4px var(--focus);background:var(--focus);color:#0c1013}
+.avs{display:flex;gap:34px;padding:18px 80px 26px 48px;overflow:hidden;position:relative;scroll-behavior:smooth}
+.av{flex:none;width:150px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer}
+.av .circ{position:relative;width:122px;height:122px;border-radius:50%;overflow:hidden}
+.av .dot{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:50%;background:var(--accent);border:4px solid var(--bg)}
+.av .nm{font-size:20px;color:var(--muted);text-align:center;line-height:1.2;max-width:150px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.av.sel .nm{color:var(--fg);font-weight:600}
+.av.focused .circ{box-shadow:0 0 0 5px var(--focus)}
+.av.focused .nm{color:#fff}
+.grid{display:grid;grid-template-columns:repeat(3,416px);gap:44px 34px;padding:20px 80px 80px 48px}
+.grid4{grid-template-columns:repeat(4,370px);gap:40px 30px}
+.grid4 .card,.grid4 .thumb{width:370px}.grid4 .thumb{height:208px}
+
+.hero{position:relative;height:560px}
+.hero .art{position:absolute;inset:0}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,16,19,.96) 0%,rgba(12,16,19,.75) 45%,rgba(12,16,19,.1) 80%),linear-gradient(0deg,var(--bg) 0%,rgba(12,16,19,0) 40%)}
+.hero .in{position:absolute;left:48px;bottom:56px;z-index:1;max-width:920px}
+.hero .kick{font-size:22px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:14px;align-items:center}
+.hero h1{font-family:var(--display);font-size:84px;line-height:1;margin:14px 0 18px;letter-spacing:-.015em}
+.hero p{font-size:26px;line-height:1.45;color:#cfd7dc;margin:0 0 30px;max-width:46ch}
+.hero.eph{height:780px}
+.eph h1{font-size:72px}
+.facts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:24px;color:#cfd7dc;margin-bottom:22px}
+.facts span{display:flex;align-items:center;gap:8px}
+.facts svg{width:28px;height:28px}
+.facts .q{border:2px solid rgba(255,255,255,.45);border-radius:6px;padding:1px 9px;font-size:19px;font-weight:700;letter-spacing:.04em}
+.facts .q svg{width:24px;height:24px}
+.epbar{width:560px;height:8px;border-radius:4px;background:rgba(255,255,255,.2)}
+.epbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.eprest{font-size:21px;color:var(--muted);margin:10px 0 26px}
+.btns{display:flex;gap:18px}
+.btn{white-space:nowrap;display:flex;align-items:center;gap:12px;font-size:25px;font-weight:700;padding:16px 30px;border-radius:999px;background:var(--surface2);color:var(--fg);cursor:pointer}
+.btn svg{width:28px;height:28px}
+.btn.sub{background:var(--fg);color:#0c1013}
+.btn.subbed{background:var(--surface2);color:var(--fg)}
+.btn.focused{background:var(--focus);color:#0c1013;box-shadow:0 0 0 4px rgba(255,255,255,.35)}
+.btn:not(.sub).focused{background:var(--surface2);color:var(--fg);box-shadow:0 0 0 4px var(--focus)}
+.stag{display:inline-block;border-radius:6px;padding:3px 10px;font-size:18px;font-weight:700;color:#fff;letter-spacing:.03em}
+
+.kb{display:grid;grid-template-columns:repeat(7,74px);gap:10px;padding:10px 0 0}
+.k{height:74px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:600;cursor:pointer}
+.k.wide{grid-column:span 3;font-size:22px}
+.k.focused{background:var(--focus);color:#0c1013}
+.search{display:grid;grid-template-columns:560px 1fr;gap:56px;padding:0 0 0 48px}
+.qbox{height:84px;border-radius:14px;background:var(--surface);display:flex;align-items:center;gap:16px;padding:0 24px;font-size:32px;margin-bottom:14px}
+.qbox .cur{width:3px;height:40px;background:var(--accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.search .grid{padding:0 60px 80px 0;grid-template-columns:repeat(3,370px)}
+.search .card,.search .thumb{width:370px}.search .thumb{height:208px}
+.empty{padding:40px 48px;color:var(--muted);font-size:28px;max-width:30ch;line-height:1.4}
+
+#overlay{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,7,9,.72)}
+.menu{width:640px;background:var(--surface);border-radius:22px;padding:30px;box-shadow:0 30px 80px #000}
+.menu h3{margin:0 0 6px;font-family:var(--display);font-size:32px}
+.menu .sm{color:var(--muted);font-size:21px;margin-bottom:20px}
+.mi{display:flex;align-items:center;gap:18px;font-size:26px;font-weight:600;padding:18px 22px;border-radius:14px;cursor:pointer}
+.mi svg{width:30px;height:30px;flex:none}
+.mi.focused{background:var(--focus);color:#0c1013}
+
+#player{position:absolute;inset:0;z-index:15;background:#000}
+#player .art{position:absolute;inset:0;filter:saturate(1.1)}
+#player .shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.2) 42%,rgba(0,0,0,0) 60%,rgba(0,0,0,.6) 100%);transition:opacity .3s}
+#player .osd{transition:opacity .3s}
+#player.hide .osd,#player.hide .shade{opacity:0}
+.ptop{position:absolute;left:80px;right:80px;top:56px;display:flex;justify-content:space-between;font-size:22px;color:#c9d2d7}
+.ptop b{color:#fff}
+.pbot{position:absolute;left:80px;right:80px;bottom:64px}
+.pbot h2{font-family:var(--display);font-size:56px;margin:0 0 6px}
+.pbot .sub2{font-size:24px;color:#c9d2d7;margin-bottom:34px}
+.bar{position:relative;height:10px;border-radius:5px;background:rgba(255,255,255,.25)}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.bar b{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#fff}
+.seek{padding:18px 0;margin:-18px 0;border-radius:12px;cursor:pointer}
+.seek .bar{transition:height .15s}
+.seek.focused .bar{height:16px;box-shadow:0 0 0 4px rgba(255,255,255,.9)}
+.seek.focused .bar b{width:34px;height:34px;margin:-17px 0 0 -17px}
+#pghost{position:absolute;top:50%;width:6px;height:44px;margin:-22px 0 0 -3px;border-radius:3px;background:var(--accent);opacity:0}
+#phint{position:absolute;bottom:34px;transform:translateX(-50%);background:#fff;color:#0c1013;font-size:24px;font-weight:700;padding:8px 16px;border-radius:10px;white-space:nowrap;opacity:0;transition:opacity .2s;font-variant-numeric:tabular-nums}
+.times{display:flex;justify-content:space-between;font-size:22px;color:#c9d2d7;margin:14px 0 30px;font-variant-numeric:tabular-nums}
+.pc{display:flex;gap:18px;align-items:center}
+.pb{height:76px;min-width:76px;padding:0 22px;border-radius:38px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;gap:12px;font-size:23px;font-weight:600;cursor:pointer;color:#fff}
+.pb svg{width:32px;height:32px}
+.pb.focused{background:#fff;color:#0c1013}
+.pc .gap{flex:1}
+#toast{position:absolute;left:50%;top:60px;transform:translate(-50%,-30px);opacity:0;z-index:30;background:var(--fg);color:#0c1013;font-size:25px;font-weight:600;padding:16px 30px;border-radius:999px;transition:all .2s ease;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.hint{position:absolute;right:56px;bottom:30px;font-size:19px;color:var(--muted);z-index:4;display:flex;gap:26px}
+.hint b{color:#cfd7dc;font-weight:600}
+.resume{display:flex;gap:44px;align-items:center;margin:4px 0 26px 48px;padding:0}
+.resume .rthumb{position:relative;width:620px;height:349px;border-radius:18px;overflow:hidden;flex:none}
+.resume .eyebrow{font-size:22px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.resume h3{font-family:var(--display);font-size:56px;line-height:1.05;margin:12px 0 10px;max-width:16ch}
+.resume .rm{font-size:24px;color:var(--muted);margin-bottom:28px}
+.resume .rbar{height:8px;width:520px;border-radius:4px;background:var(--surface2);margin-bottom:30px}
+.resume .rbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.resume .btn.f.focused~*{}
+.ri.bottom{margin-top:auto;margin-bottom:40px}
+.opts{display:flex;flex-direction:column;gap:14px;padding:10px 0 0 48px;width:1100px}
+.opt{display:flex;align-items:center;gap:26px;padding:24px 30px;border-radius:18px;background:var(--surface);cursor:pointer}
+.opt .radio{flex:none;width:34px;height:34px;border-radius:50%;border:3px solid var(--muted);display:flex;align-items:center;justify-content:center}
+.opt.sel .radio{border-color:var(--accent)}
+.opt.sel .radio::after{content:"";width:16px;height:16px;border-radius:50%;background:var(--accent)}
+.opt b{display:block;font-size:30px}
+.opt span{font-size:22px;color:var(--muted)}
+.opt.focused{background:var(--focus);color:#0c1013}
+.opt.focused span{color:#3b4650}
+.opt.focused .radio{border-color:#0c1013}
+.opt.focused.sel .radio::after{background:#0c1013}
+.setnote{padding:30px 0 0 48px;font-size:22px;color:var(--muted);max-width:60ch;line-height:1.5}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="page">
+  <div class="intro">
+    <div>
+      <h1><svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(20 37)"><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f" opacity=".3" transform="rotate(-27)"/><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f" opacity=".55" transform="rotate(-9)"/><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f" opacity=".8" transform="rotate(9)"/><g transform="rotate(27)"><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f"/><path d="M-2.6 -21v8l6.6-4z" fill="#231a05"/></g></g></svg>Quartett Mediathek</h1>
+      <p>Klickbares Mockup der Android-TV-App für ARD, ZDF, 3sat und arte. Bedienung wie bei YouTube auf dem Fernseher: Leiste links, Reihen mit Kacheln, ein Abo-Feed mit neuen Folgen. Alle Sendungen und Folgen sind erfundene Beispieldaten.</p>
+    </div>
+    <div>
+      <div class="label">Name</div>
+      <div class="names"><span class="on">Quartett Mediathek</span><span>vier Mediatheken, eine App</span></div>
+    </div>
+  </div>
+
+  <div class="wrap" id="wrap">
+    <div id="stage">
+      <div class="topfade"></div>
+      <div id="hdr"></div>
+      <nav id="rail"></nav>
+      <div id="main"></div>
+      <div id="player" hidden></div>
+      <div id="overlay" hidden></div>
+      <div id="toast"></div>
+    </div>
+  </div>
+
+  <div class="below">
+    <div class="remote">
+      <div class="dpad">
+        <span></span><button class="rb" data-k="up" aria-label="Hoch">▲</button><span></span>
+        <button class="rb" data-k="left" aria-label="Links">◀</button><button class="rb ok" data-k="ok" aria-label="OK, gedrückt halten für Menü">OK</button><button class="rb" data-k="right" aria-label="Rechts">▶</button>
+        <span></span><button class="rb" data-k="down" aria-label="Runter">▼</button><span></span>
+      </div>
+      <div class="side">
+        <button class="rb" data-k="back">Zurück</button>
+        <button class="rb" data-k="play">Play / Pause</button>
+        <button class="rb" data-k="menu">Langes OK</button>
+      </div>
+    </div>
+    <div class="hints">
+      Im Player: Spur auswählen, <kbd>←</kbd> <kbd>→</kbd> tippen springt 10 s zurück oder 30 s vor, gedrückt halten spult immer schneller. Tastatur: <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> Steuerkreuz, <kbd>Enter</kbd> OK, <kbd>Enter</kbd> halten oder <kbd>M</kbd> für das Menü, <kbd>Esc</kbd> oder <kbd>⌫</kbd> Zurück, <kbd>Leertaste</kbd> Play. Kacheln lassen sich auch anklicken.
+    </div>
+    <div>
+      <div class="label">Direkt zu</div>
+      <div class="jump">
+        <button class="rb" data-j="home">Start</button>
+        <button class="rb" data-j="abos">Abos</button>
+        <button class="rb" data-j="show">Sendungsseite</button>
+        <button class="rb" data-j="ep">Folgenseite</button>
+        <button class="rb" data-j="menu">Menü auf Kachel</button>
+        <button class="rb" data-j="player">Player</button>
+        <button class="rb" data-j="suche">Suche</button>
+        <button class="rb" data-j="settings">Einstellungen</button>
+        <button class="rb" data-j="restart">App neu starten</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const NOW = new Date(2026,10,14,20,15);
+const SENDERS = {ard:{n:'ARD',c:'var(--ard)'},zdf:{n:'ZDF',c:'var(--zdf)'},s3:{n:'3sat',c:'var(--s3)'},arte:{n:'arte',c:'var(--arte)'}};
+const SHOWS = [
+ {id:'moorbauern',t:'Die Moorbauern',s:'ard',sub:'NDR',g:'Doku-Serie',h:95,d:44,every:7,off:1,desc:'Drei Familien bewirtschaften Höfe am Rand des Teufelsmoors. Ein Jahr zwischen Wiedervernässung, Torfgeschichte und Kranichzug.',
+  e:['Neue Pächter','Torf und Tradition','Der erste Frost','Kraniche über dem Hof','Wenn das Wasser zurückkommt']},
+ {id:'hafenrevier',t:'Hafenrevier',s:'ard',sub:'NDR',g:'Krimiserie',h:205,d:48,every:7,off:2,desc:'Kommissarin Jara Wendt ermittelt zwischen Containerterminal und Fischmarkt. Jede Folge ein Fall, die Nachtschicht zieht sich durch die Staffel.',
+  e:['Ladung ohne Papiere','Nebel über Pier 4','Der stille Zeuge','Schichtwechsel','Letzte Fähre']},
+ {id:'tiefsee',t:'Planet Tiefsee',s:'zdf',sub:'ZDF',g:'Dokumentation',h:220,d:43,every:14,off:5,desc:'Tauchroboter, Forschungsschiffe und Lebewesen, die nie Sonnenlicht sehen. Fünf Expeditionen in die Tiefsee.',
+  e:['Expedition Marianengraben','Die Schlote des Pazifiks','Riesen der Tiefe','Leben ohne Licht','Leuchten im Dunkeln']},
+ {id:'abgruende',t:'Abgründe am See',s:'zdf',sub:'ZDFneo',g:'Krimiserie',h:262,d:89,every:7,off:3,desc:'Ein Dorf am Ammersee, ein verschwundener Bootsverleiher und eine Ermittlerin, die nicht zurückkommen wollte.',
+  e:['Das Bootshaus','Eis auf dem Steg','Die zweite Schwester','Funkstille','Unter der Oberfläche']},
+ {id:'werkstatt',t:'Werkstatt Europa',s:'s3',sub:'3sat',g:'Reportage',h:28,d:29,every:7,off:0,desc:'Handwerk, das fast verschwunden ist: Menschen, die es weiterführen, und wie ihre Werkstätten heute wirtschaften.',
+  e:['Ziegel aus Friesland','Messer aus Thiers','Orgelbau im Erzgebirge','Die letzte Seilerei','Glasbläser in Murano']},
+ {id:'fernweh',t:'Fernweh-Atlas',s:'arte',sub:'arte',g:'Reisereportage',h:170,d:26,every:7,off:4,desc:'Eine Region, ein Tag, eine Karte. Reisereportagen über Orte abseits der bekannten Routen.',
+  e:['Inseln der Ägäis','Patagonien im Herbst','Entlang der Donau','Georgiens Bergdörfer','Die Färöer']},
+ {id:'alpenlicht',t:'Alpenlicht',s:'s3',sub:'3sat',g:'Dokumentation',h:192,d:52,every:10,off:6,desc:'Ein Jahr in den Westalpen: Almwirtschaft, schmelzende Gletscher und alte Saumpfade.',
+  e:['Bergwald','Wintervorrat','Die Säumerpfade','Gletscher im Wandel','Sommer auf der Alm']},
+ {id:'zweiufer',t:'Zwischen zwei Ufern',s:'arte',sub:'arte',g:'Spielfilm',h:342,d:104,every:1,off:2,desc:'Eine Fährfrau an der Oder und ein Bauingenieur, der die Brücke bauen soll, die ihre Arbeit überflüssig macht.',
+  e:['Zwischen zwei Ufern']},
+ {id:'kueche',t:'Stadt, Land, Küche',s:'ard',sub:'SWR',g:'Kochen',h:44,d:29,every:7,off:3,desc:'Regionale Küche aus dem Südwesten, gekocht mit den Leuten, die die Zutaten erzeugen.',
+  e:['Spätzle mit Linsen','Wild aus dem Pfälzerwald','Kürbis dreimal','Maultaschen von Grund auf','Zwiebelkuchen und Federweißer']},
+ {id:'nachtzug',t:'Nachtzug nach Triest',s:'zdf',sub:'ZDF',g:'Thriller-Serie',h:285,d:45,every:7,off:1,desc:'Sechs Fahrgäste, ein Schlafwagen, eine Nacht von Wien an die Adria. Einer von ihnen kommt nicht an.',
+  e:['Ankunft','Halt in Ljubljana','Abteil 12','Grenzkontrolle','Abfahrt Wien']},
+ {id:'sternwarte',t:'Die Sternwarte',s:'arte',sub:'arte',g:'Wissenschaft',h:238,d:27,every:7,off:5,desc:'Astrophysik zum Mitdenken: jede Folge eine Frage, beantwortet an einem Observatorium in Europa.',
+  e:['Die dunkle Materie','Schwarze Löcher hören','Planeten anderer Sonnen','Das Rauschen des Urknalls','Wie schwer ist ein Stern?']},
+ {id:'grenzland',t:'Grenzland',s:'ard',sub:'MDR',g:'Reportage',h:12,d:30,every:14,off:8,desc:'Geschichten von Menschen, die an der deutsch-polnischen und deutsch-tschechischen Grenze leben und arbeiten.',
+  e:['Die Brücke','Marktag in Hof','Doppelte Heimat','Die Neiße im Sommer','Pendler zwischen Görlitz und Zgorzelec']}
+];
+const SHOW = {}; const EP = {};
+SHOWS.forEach(sh=>{ SHOW[sh.id]=sh; sh.eps=sh.e.map((title,i)=>{ // i=0 newest
+  const n=sh.e.length-i; const id=sh.id+'-'+n;
+  const date=new Date(NOW.getTime()-((sh.off+i*sh.every)*24+ (i===0&&sh.off===0?3:0))*3600e3 - (sh.off===0&&i===0?0:0));
+  const ep={id,show:sh.id,n,title,date,dur:(sh.d*60)+((n*137)%540)-200,seed:n*37+sh.h};
+  EP[id]=ep; return ep; }); });
+
+const st = {
+  screen:'home', stack:[], showId:'hafenrevier',
+  subs:new Set(['moorbauern','hafenrevier','abgruende','werkstatt','tiefsee','nachtzug']),
+  seenUntil:{moorbauern:NOW-5*864e5, hafenrevier:NOW-3*864e5, abgruende:NOW-4*864e5, werkstatt:NOW-2*864e5, tiefsee:NOW-1*864e5, nachtzug:NOW-30*864e5},
+  merk:new Set(['ep:fernweh-5','show:alpenlicht','ep:zweiufer-1','ep:sternwarte-4','show:grenzland']),
+  watched:new Set(['hafenrevier-3','moorbauern-3']),
+  prog:{'abgruende-3':2210,'tiefsee-4':860,'nachtzug-3':1530},
+  lastPlayed:'abgruende-3', startScreen:(()=>{try{return localStorage.getItem('fr-start')||'home'}catch(e){return 'home'}})(),
+  updated:'heute, 6:02', loading:false, aboFilter:null, entFilter:'all', q:'', lastKey:{}, menu:null, player:null
+};
+
+const $ = s=>document.querySelector(s);
+const stage=$('#stage'), hdr=$('#hdr'), main=$('#main'), rail=$('#rail'), overlay=$('#overlay'), player=$('#player'), toastEl=$('#toast');
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- helpers ---------- */
+function art(h,seed){
+  const x=15+(seed*29)%70, y=18+(seed*13)%30, hz=48+(seed*7)%22;
+  return `background:radial-gradient(circle at ${x}% ${y}%,hsla(${h+35},85%,78%,.95) 0 7%,hsla(${h+35},85%,70%,.25) 8%,transparent 26%),`+
+   `linear-gradient(${170+(seed%20)}deg,transparent ${hz+12}%,hsla(${h-25},40%,10%,.55) ${hz+12}% ${hz+30}%,transparent ${hz+30}%),`+
+   `linear-gradient(180deg,hsl(${h},42%,30%) 0%,hsl(${h+18},48%,52%) ${hz}%,hsl(${h-12},38%,22%) ${hz}%,hsl(${h-22},40%,11%) 100%)`;
+}
+function rel(d){ const h=(NOW-d)/36e5; if(h<1)return 'gerade eben'; if(h<20)return `vor ${Math.round(h)} Std.`; const days=Math.round(h/24);
+  if(days<=1)return 'gestern'; if(days<7)return `vor ${days} Tagen`; if(days<14)return 'vor 1 Woche'; if(days<31)return `vor ${Math.floor(days/7)} Wochen`;
+  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}); }
+function mmss(s){ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); }
+function isNew(ep){ return st.subs.has(ep.show) && ep.date>st.seenUntil[ep.show] && !st.watched.has(ep.id) && !st.prog[ep.id]; }
+/* Material Symbols Rounded (Apache-2.0), only the icons this UI uses, inlined as SVG paths */
+const I = {"home":"M222.15-182.15h143.78V-400q0-14.42 9.83-24.24 9.82-9.83 24.24-9.83h160q14.42 0 24.24 9.83 9.83 9.82 9.83 24.24v217.85h143.78v-386.81L480-762.37 222.15-568.96v386.81Zm-68.13 0v-386.89q0-16.12 7.14-30.53 7.13-14.42 19.97-23.93l257.85-193.57q17.83-13.67 40.86-13.67t41.18 13.67L778.87-623.5q12.95 9.51 20.15 23.93 7.2 14.41 7.2 30.53v386.89q0 28.35-19.96 48.24t-48.41 19.89H562.63q-14.42 0-24.24-9.82-9.82-9.82-9.82-24.25v-220.48h-97.14v220.48q0 14.43-9.82 24.25t-24.24 9.82H222.15q-28.35 0-48.24-19.89t-19.89-48.24ZM480-472.76Z","entdecken":"m333.83-312.43 204.63-61.7q16.95-5.22 29.07-17.34 12.12-12.12 17.34-29.07l61.7-204.63q3.23-9.6-4.1-17.12-7.34-7.51-17.3-4.28l-204.63 61.7q-16.95 5.22-29.07 17.34-12.12 12.12-17.34 29.07l-61.7 204.63q-3.23 9.6 4.1 17.12 7.34 7.51 17.3 4.28Zm145.88-131.16q-15.04 0-25.58-10.83-10.54-10.84-10.54-25.87 0-15.04 10.83-25.58 10.84-10.54 25.87-10.54 15.04 0 25.58 10.83 10.54 10.84 10.54 25.87 0 15.04-10.83 25.58-10.84 10.54-25.87 10.54Zm.59 369.57q-84.2 0-158.04-31.88-73.84-31.88-129.16-87.2-55.32-55.32-87.2-129.2-31.88-73.88-31.88-158.17 0-84.28 31.88-158.2 31.88-73.91 87.16-128.74 55.28-54.84 129.18-86.82 73.9-31.99 158.21-31.99 84.3 0 158.25 31.97 73.94 31.97 128.75 86.77 54.82 54.8 86.79 128.88 31.98 74.08 31.98 158.33 0 84.24-31.99 158.07-31.98 73.84-86.82 128.95-54.83 55.1-128.87 87.17Q564.5-74.02 480.3-74.02Zm.14-68.13q141.08 0 239.24-98.61 98.17-98.61 98.17-239.68 0-141.08-98.12-239.24-98.12-98.17-239.2-98.17-141.08 0-239.73 98.12-98.65 98.12-98.65 239.2 0 141.08 98.61 239.73 98.61 98.65 239.68 98.65ZM480-480Z","suche":"M376.57-324.93q-109.84 0-185.96-76.2Q114.5-477.33 114.5-585t76.2-183.87q76.19-76.2 184.37-76.2 108.17 0 183.86 76.2 75.7 76.2 75.7 184.02 0 43.33-13.64 82.97t-40.92 74.4l240.56 238.57q10.2 9.99 10.2 24.76 0 14.78-10.2 24.98-10.43 10.43-25.21 10.43-14.78 0-24.53-10.43L531.33-378.5q-29.76 25.28-69.6 39.42-39.84 14.15-85.16 14.15Zm-1-68.14q79.81 0 135.37-56.18T566.5-585q0-79.57-55.56-135.75-55.56-56.18-135.37-56.18-80.41 0-136.68 56.18-56.26 56.18-56.26 135.75t56.26 135.75q56.27 56.18 136.68 56.18Z","abos":"M142.15-74.02q-27.6 0-47.86-20.27-20.27-20.26-20.27-47.86v-435.7q0-27.7 20.27-48.03 20.26-20.34 47.86-20.34h675.7q27.7 0 48.03 20.34 20.34 20.33 20.34 48.03v435.7q0 27.6-20.34 47.86-20.33 20.27-48.03 20.27h-675.7Zm0-68.13h675.7v-435.7h-675.7v435.7Zm291.2-87 173.26-117.18q7.72-5.61 7.72-13.74 0-8.13-7.72-13.6L433.35-489.85q-9.2-5.72-17.77-1.08-8.58 4.64-8.58 14.76v233.1q0 10.38 8.58 15.01 8.57 4.63 17.77-1.09ZM179-706.22q-12.75 0-21.37-8.67-8.63-8.68-8.63-21.38 0-12.71 8.63-21.33 8.62-8.62 21.37-8.62h602q12.75 0 21.38 8.8 8.62 8.79 8.62 21.5 0 12.7-8.62 21.2-8.63 8.5-21.38 8.5H179Zm131-120q-12.75 0-21.37-8.67-8.63-8.68-8.63-21.38 0-12.71 8.63-21.33 8.62-8.62 21.37-8.62h340q12.75 0 21.38 8.8 8.62 8.79 8.62 21.5 0 12.7-8.62 21.2-8.63 8.5-21.38 8.5H310ZM142.15-142.15v-435.7 435.7Z","merkliste":"m480-233.3-190.74 81.6q-34.06 14.68-64.65-5.51-30.59-20.19-30.59-57.14v-568.5q0-27.7 20.27-48.03 20.26-20.34 47.86-20.34h435.7q27.7 0 48.03 20.34 20.34 20.33 20.34 48.03v568.5q0 36.95-30.71 57.14-30.71 20.19-64.77 5.51L480-233.3Zm0-72.89 217.85 91.84v-568.5h-435.7v568.5L480-306.19Zm0-476.66H262.15h435.7H480Z","merkfill":"m480-233.3-190.74 81.6q-34.06 14.68-64.65-5.74-30.59-20.41-30.59-56.91v-568.5q0-27.7 20.27-48.03 20.26-20.34 47.86-20.34h435.7q27.7 0 48.03 20.34 20.34 20.33 20.34 48.03v568.5q0 36.5-30.71 56.91-30.71 20.42-64.77 5.74L480-233.3Z","play":"M314.02-254.65v-456.7q0-15.91 10.21-25.11 10.22-9.19 23.75-9.19 4.53 0 9.16 1.12 4.62 1.12 9.31 3.58l359.29 229.6q7.84 5.48 11.87 12.44 4.04 6.95 4.04 15.91t-4.04 15.91q-4.03 6.96-11.87 12.44l-359.29 229.6q-4.69 2.46-9.32 3.46t-9.16 1q-13.56 0-23.75-9.02-10.2-9.02-10.2-25.04Z","pause":"M620.42-189q-28.17 0-48.23-20.08-20.06-20.09-20.06-48.29v-445.26q0-28.2 20.06-48.29Q592.25-771 620.43-771h55q28.17 0 48.18 20.08 20.02 20.09 20.02 48.29v445.26q0 28.2-20.02 48.29Q703.59-189 675.42-189h-55Zm-335.76 0q-28.18 0-48.23-20.08-20.06-20.09-20.06-48.29v-445.26q0-28.2 20.06-48.29Q256.49-771 284.66-771h55q28.18 0 48.19 20.08 20.02 20.09 20.02 48.29v445.26q0 28.2-20.02 48.29Q367.83-189 339.66-189h-55Z","bell":"M188.09-194.02q-14.43 0-24.25-9.87t-9.82-24.37q0-14.5 9.82-24.2 9.82-9.69 24.25-9.69h43.78v-298.02q0-86.16 50.34-154.81 50.33-68.65 133.72-86.37v-20.56q0-26.92 18.7-45.61 18.7-18.7 45.37-18.7 26.67 0 45.37 18.7 18.7 18.69 18.7 45.61v20.56q83.39 17.48 133.84 86.25 50.46 68.77 50.46 154.93v298.02h43.54q14.43 0 24.37 9.87 9.94 9.87 9.94 24.37 0 14.5-9.94 24.19-9.94 9.7-24.37 9.7H188.09ZM480-501.04Zm.24 429.17q-33.96 0-58.06-24.1-24.09-24.1-24.09-58.05h164.06q0 33.95-24.1 58.05-24.09 24.1-57.81 24.1ZM300-262.15h360v-298.02q0-74.76-52.5-127.38Q555-740.17 480-740.17t-127.5 52.62Q300-634.93 300-560.17v298.02Z","check":"m378-338.22 359.89-359.65q10.2-10.2 24.49-10.2t24.49 10.2q10.2 10.2 10.2 24.49t-10.2 24.49L402.11-264.37q-10.2 10.2-24.11 10.2t-24.11-10.2L172.37-445.89q-10.2-10.2-9.82-24.49.38-14.29 10.58-24.49t24.49-10.2q14.29 0 24.49 10.2L378-338.22Z","eye":"M600.5-379.62q49.5-49.62 49.5-120.5T600.38-620.5Q550.76-670 479.88-670T359.5-620.38Q310-570.76 310-499.88t49.62 120.38q49.62 49.5 120.5 49.5t120.38-49.62Zm-197.25-43.85q-31.42-31.65-31.42-76.75 0-45.11 31.64-76.53 31.65-31.42 76.75-31.42 45.11 0 76.53 31.64 31.42 31.65 31.42 76.75 0 45.11-31.64 76.53-31.65 31.42-76.75 31.42-45.11 0-76.53-31.64ZM232.24-270.78Q120.68-347.06 53.41-466.17q-4.48-8.04-6.71-16.57-2.24-8.53-2.24-17.32 0-8.79 2.24-17.26 2.23-8.48 6.71-16.51 67.27-119.11 178.83-195.39Q343.8-805.5 480-805.5t247.76 76.28q111.56 76.28 178.83 195.39 4.48 8.04 6.71 16.57 2.24 8.53 2.24 17.32 0 8.79-2.24 17.26-2.23 8.48-6.71 16.51-67.27 119.11-178.83 195.39Q616.2-194.5 480-194.5t-247.76-76.28ZM480-500Zm222.26 174.5Q803.52-391 856.52-500q-53-109-154.09-174.5T480.17-740Q359-740 257.74-674.5T102.48-500q54 109 155.09 174.5T479.83-260q121.17 0 222.43-65.5Z","tv":"M142.15-194.02q-27.6 0-47.86-20.27-20.27-20.26-20.27-47.86v-515.7q0-27.7 20.27-48.03 20.26-20.34 47.86-20.34h675.7q27.7 0 48.03 20.34 20.34 20.33 20.34 48.03v515.7q0 27.6-20.34 47.86-20.33 20.27-48.03 20.27h-184.5v45.93q0 14.43-9.96 24.25-9.95 9.82-24.35 9.82H360.96q-14.43 0-24.25-9.82t-9.82-24.25v-45.93H142.15Zm0-68.13h675.7v-515.7h-675.7v515.7Zm0 0v-515.7 515.7Z","rw":"M815.61-266.07 547.35-451.65q-7.96-5.47-11.44-12.93-3.48-7.46-3.48-15.42t3.48-15.42q3.48-7.46 11.44-12.93l268.26-185.58q4.48-3.24 9.02-4.98 4.54-1.74 10.36-1.74 13.68 0 23.88 9.16t10.2 24.9v373.18q0 15.74-10.23 24.9-10.23 9.16-23.79 9.16-5.77 0-10.37-1.74-4.59-1.74-9.07-4.98Zm-415.15 0L132.2-451.65q-7.96-5.47-11.44-12.93-3.48-7.46-3.48-15.42t3.48-15.42q3.48-7.46 11.44-12.93l268.26-185.58q4.47-3.24 9.19-4.98 4.72-1.74 10.2-1.74 13.58 0 23.82 9.16t10.24 24.9v373.18q0 15.74-10.24 24.9-10.24 9.16-23.82 9.16-5.48 0-10.2-1.74-4.72-1.74-9.19-4.98Z","ff":"M88.93-293.41v-373.18q0-15.67 10.2-24.87 10.2-9.19 23.87-9.19 5.72 0 10.32 1.74 4.59 1.74 9.07 4.98l268.5 185.58q7.72 5.48 11.2 12.94 3.48 7.45 3.48 15.41t-3.48 15.41q-3.48 7.46-11.2 12.94l-268.5 185.58q-4.48 3.24-9.07 4.98-4.6 1.74-10.32 1.74-13.67 0-23.87-9.19-10.2-9.2-10.2-24.87Zm420.16 0v-373.18q0-15.67 10.19-24.87 10.2-9.19 23.87-9.19 5.48 0 10.2 1.74 4.72 1.74 9.19 4.98L830.8-508.35q7.96 5.48 11.44 12.94 3.48 7.45 3.48 15.41t-3.48 15.41q-3.48 7.46-11.44 12.94L562.54-266.07q-4.47 3.24-9.19 4.98-4.72 1.74-10.2 1.74-13.67 0-23.87-9.19-10.19-9.2-10.19-24.87Z","einstellungen":"M417.65-74.02q-14.95 0-26.55-9.36-11.6-9.36-13.6-24.32l-15-94.23q-17.57-6.29-37.49-17.69-19.92-11.4-34.73-23.45l-85.76 40q-14.72 6.24-29.67 1.62-14.96-4.62-23.2-18.57L90.3-330.24q-8.47-13.48-4.85-28.31 3.62-14.84 16.33-24.32l79.76-59q-1.76-8.28-2.26-19.06-.5-10.79-.5-19.07 0-8.28.5-19.07.5-10.78 2.26-19.06l-79.76-58.76q-12.95-9.48-16.45-24.32-3.5-14.83 4.97-28.55l61.35-110.22q8.24-13.48 23.08-18.34 14.84-4.85 29.55 1.39l86.48 40q14.57-11.81 34.37-23.09 19.8-11.28 37.37-16.81l15-95.24q2-15.19 13.6-24.67 11.6-9.48 26.55-9.48h124.7q14.95 0 26.55 9.48 11.6 9.48 13.6 24.67l15 94.24q17.57 6.53 37.87 17.31 20.3 10.78 34.35 23.59l85.76-40q14.72-6.24 29.17-1.39 14.46 4.86 22.7 18.34l62.58 110.22q8.24 13.72 4.74 29.05-3.5 15.34-16.45 23.82l-80 56.76q1.76 9.28 2.38 20.06.62 10.79.62 20.07 0 9.28-.62 19.57-.62 10.28-2.38 19.56l80 57.76q12.95 8.48 16.45 23.82 3.5 15.33-4.74 29.05l-61.58 110.22q-8.24 13.72-23.08 18.45-14.84 4.74-29.55-1.5l-86.24-40q-14.81 12.05-34.11 23.83-19.3 11.78-37.87 17.31l-15 94.23q-2 14.96-13.6 24.32t-26.55 9.36h-124.7Zm20.26-68.13h83.94l14.24-111.76q33.24-8 63.09-25 29.86-17 53.86-41.72l106 46 37.85-68.89-93.52-68.52q4-17.24 6.62-33.98t2.62-33.98q0-17.24-2.12-33.98t-7.12-33.98l93.76-68.52-38.09-68.89-105.76 46q-23-26.48-52.48-44.34-29.47-17.86-64.71-22.62l-14-111.52h-84.18l-13.76 111.52q-34.48 6.76-64.45 24.12-29.98 17.36-53.22 42.84l-105.52-46-38.09 68.89 93.28 68.28q-4 17.24-6.62 34.1-2.62 16.86-2.62 34.1 0 17.24 2.62 34.22t6.62 33.98l-93.28 68.28 38.09 68.89 105.52-46q24.24 24.48 54.22 41.72 29.97 17.24 63.45 25.24l13.76 111.52ZM479.52-350q54 0 92-38t38-92q0-54-38-92t-92-38q-54 0-92 38t-38 92q0 54 38 92t92 38Zm.48-130Z","refresh":"M479.28-154.02q-135.39 0-230.68-95.3-95.3-95.29-95.3-230.68t95.3-230.8q95.29-95.42 230.68-95.42 86.44 0 151.75 34.98 65.32 34.98 113.04 96.41v-99.95q0-13.48 8.85-22.46 8.86-8.98 22.46-8.98 13.6 0 22.58 8.98 8.97 8.98 8.97 22.46v197.35q0 14.67-9.81 24.36-9.82 9.7-24.49 9.7H575.04q-13.47 0-22.33-8.98-8.86-8.98-8.86-22.45 0-13.48 8.98-22.34 8.97-8.86 22.45-8.86h135.61q-38.24-59.04-96.28-95.45-58.04-36.4-135.33-36.4-108.04 0-182.94 74.9-74.91 74.91-74.91 182.95 0 108.04 74.91 182.95 74.9 74.9 182.94 74.9 73.09 0 136.65-38.07 63.57-38.06 95.81-102.91 6.43-12.2 19.49-18.05 13.05-5.86 25.73-.15 13.43 5.48 18.15 18.18 4.72 12.69-1 25.65-40.2 84.24-119.65 133.86-79.46 49.62-175.18 49.62Z","speed":"M473.42-303.5Q516.76-305 537-336l175.89-274.02q8.2-12.44-1.62-22.25-9.81-9.82-22.25-1.62L418-456q-30 20.24-32 64.07-2 43.84 21.04 66.88 23.05 23.05 66.38 21.55ZM478-805.22q44.05 0 92.96 11.76 48.9 11.75 96.65 38.05 12.67 7.24 15 20.98 2.32 13.74-6.39 26.37-8.72 12.63-20.86 14.96-12.14 2.34-25.82-3.66-39.32-21.04-80.11-30.57-40.78-9.52-71.43-9.52-139.29 0-237.57 99.56-98.28 99.57-98.28 241.19 0 45.1 12.26 90.14 12.26 45.05 35.02 83.81h576.1q22.04-36 34.68-82.93Q812.85-352 812.85-398q0-33.43-8.52-72.2-8.53-38.78-28.57-74.58-7-12.92-4.78-27.71 2.22-14.79 14.61-22.81 12.11-8.66 26.47-4.42 14.35 4.24 20.59 17.92 22.55 44.69 34.68 89.1 12.13 44.42 13.89 88.6 1.76 60.58-12.42 114.48-14.19 53.91-41.54 99.73-13.19 24.43-27.87 30.15-14.67 5.72-36.39 5.72H192q-18.67 0-36.61-9.34-17.93-9.34-26.65-26.53-26.24-48.24-40.48-98.79-14.24-50.54-14.24-107.34 0-84.18 31.88-158.61t86.74-129.93q54.86-55.5 128.69-88.08T478-805.22Zm-5.65 333.87Z","tune":"M434.9-123.8q-9.33-9.3-9.33-23.33v-165.24q0-14.03 9.51-23.33 9.51-9.3 23.53-9.3 14.02 0 23.24 9.3 9.22 9.3 9.22 23.33V-262h320.36q14.04 0 23.34 9.39 9.3 9.4 9.3 23.42 0 14.02-9.3 23.35-9.3 9.34-23.34 9.34H491.07v49.37q0 14.03-9.4 23.33-9.39 9.3-23.41 9.3t-23.36-9.3Zm-286.33-72.7q-14.04 0-23.34-9.51t-9.3-23.53q0-14.03 9.3-23.24 9.3-9.22 23.34-9.22H335.8q14.04 0 23.34 9.39 9.29 9.4 9.29 23.42 0 14.02-9.29 23.35-9.3 9.34-23.34 9.34H148.57Zm163.7-178.33q-9.34-9.46-9.34-23.41v-49.13H148.57q-13.8 0-23.22-9.51-9.42-9.51-9.42-23.3 0-13.78 9.42-23.11 9.42-9.34 23.22-9.34h154.36V-564q0-14.04 9.52-23.33 9.51-9.3 23.53-9.3 14.02 0 23.24 9.3 9.21 9.29 9.21 23.33v166q0 14.04-9.39 23.33-9.39 9.3-23.41 9.3t-23.36-9.46Zm145.93-72.54q-13.8 0-23.22-9.51-9.41-9.51-9.41-23.3 0-13.78 9.41-23.11 9.42-9.34 23.22-9.34h353.23q13.8 0 23.22 9.51 9.42 9.51 9.42 23.3 0 13.78-9.42 23.11-9.42 9.34-23.22 9.34H458.2ZM600.9-624.3q-9.33-9.3-9.33-23.33v-165.24q0-14.03 9.51-23.33 9.51-9.3 23.53-9.3 14.02 0 23.24 9.3 9.22 9.3 9.22 23.33v49.37h154.36q14.04 0 23.34 9.39 9.3 9.4 9.3 23.42 0 14.02-9.3 23.35-9.3 9.34-23.34 9.34H657.07v50.37q0 14.03-9.4 23.33-9.39 9.3-23.41 9.3t-23.36-9.3ZM148.57-698q-14.04 0-23.34-9.51t-9.3-23.54q0-14.02 9.3-23.23 9.3-9.22 23.34-9.22H501.8q14.04 0 23.34 9.39 9.29 9.4 9.29 23.42 0 14.02-9.29 23.35-9.3 9.34-23.34 9.34H148.57Z","next":"M683.11-262.83v-434.34q0-14.68 9.69-24.37 9.7-9.7 24.37-9.7 14.68 0 24.37 9.7 9.7 9.69 9.7 24.37v434.34q0 14.68-9.7 24.37-9.69 9.7-24.37 9.7-14.67 0-24.37-9.7-9.69-9.69-9.69-24.37Zm-474.35-30.58v-373.18q0-15.67 10.2-24.87 10.19-9.19 23.87-9.19 5.47 0 10.19 1.74t9.2 4.98l268.26 185.58q7.95 5.48 11.43 12.94 3.48 7.45 3.48 15.41t-3.48 15.41q-3.48 7.46-11.43 12.94L262.22-266.07q-4.48 3.24-9.2 4.98-4.72 1.74-10.19 1.74-13.68 0-23.87-9.19-10.2-9.2-10.2-24.87Z","cc":"M182.15-154.02q-27.6 0-47.86-20.27-20.27-20.26-20.27-47.86v-515.7q0-27.7 20.27-48.03 20.26-20.34 47.86-20.34h595.7q27.7 0 48.03 20.34 20.34 20.33 20.34 48.03v515.7q0 27.6-20.34 47.86-20.33 20.27-48.03 20.27h-595.7Zm0-68.13h595.7v-515.7h-595.7v515.7ZM276.22-361h133.87q14.42 0 24.24-9.82 9.82-9.82 9.82-24.25v-17.36q0-9.86-6.57-16.43t-16.43-6.57h-6.63q-9.86 0-16.43 6.57t-6.57 16.43h-96.5v-135.14h96.5q0 10 6.57 16.5t16.43 6.5h6.63q9.86 0 16.43-6.57t6.57-16.43v-17.36q0-14.43-9.82-24.25T410.09-599H276.22q-14.43 0-24.25 9.82t-9.82 24.25v169.86q0 14.43 9.82 24.25t24.25 9.82Zm408.56-238H550.91q-14.42 0-24.24 9.82-9.82 9.82-9.82 24.25v169.86q0 14.43 9.82 24.25t24.24 9.82h133.87q14.43 0 24.25-9.82t9.82-24.25v-17.36q0-9.86-6.57-16.43-6.58-6.57-16.43-6.57h-6.63q-9.86 0-16.43 6.57t-6.57 16.43h-96.5v-135.14h96.5q0 10 6.57 16.5t16.43 6.5h6.63q9.85 0 16.43-6.57 6.57-6.57 6.57-16.43v-17.36q0-14.43-9.82-24.25T684.78-599ZM182.15-222.15v-515.7 515.7Z","info":"M506.29-286.75q9.34-9.38 9.34-23.25v-177.37q0-13.87-9.46-23.25t-23.3-9.38q-13.83 0-23.16 9.38-9.34 9.38-9.34 23.25V-310q0 13.87 9.46 23.25t23.3 9.38q13.83 0 23.16-9.38Zm-.28-313.89q10.58-10.24 10.58-25.36 0-16.24-10.52-26.92-10.51-10.67-26.05-10.67-15.81 0-26.21 10.67-10.4 10.68-10.4 26.8 0 15.27 10.58 25.49 10.58 10.22 26.01 10.22 15.43 0 26.01-10.23ZM480.3-74.02q-84.2 0-158.04-31.88-73.84-31.88-129.16-87.2-55.32-55.32-87.2-129.2-31.88-73.88-31.88-158.17 0-84.28 31.88-158.2 31.88-73.91 87.16-128.74 55.28-54.84 129.18-86.82 73.9-31.99 158.21-31.99 84.3 0 158.25 31.97 73.94 31.97 128.75 86.77 54.82 54.8 86.79 128.88 31.98 74.08 31.98 158.33 0 84.24-31.99 158.07-31.98 73.84-86.82 128.95-54.83 55.1-128.87 87.17Q564.5-74.02 480.3-74.02Zm.2-68.13q140.54 0 238.95-98.75 98.4-98.76 98.4-239.6 0-140.54-98.22-238.95-98.21-98.4-239.75-98.4-140.16 0-238.95 98.22-98.78 98.21-98.78 239.75 0 140.16 98.75 238.95 98.76 98.78 239.6 98.78ZM480-480Z","replay":"M412.74-121.22q-111.48-22.43-185.1-111.39-73.62-88.96-73.62-206.15 0-69.81 29.16-132.21 29.17-62.4 82.73-106.16 8.72-8.39 22.23-8.01 13.51.38 23.19 10.05 10.47 10.48 9.71 24.56-.76 14.07-13 25.03-40.56 34.28-63.22 83.47-22.67 49.18-22.67 103.27 0 92.33 56.57 160.87 56.56 68.54 143.65 88.54 12.2 2.96 20.41 12.92 8.22 9.95 8.22 22.15 0 16.63-11.67 26.32-11.68 9.7-26.59 6.74Zm136.76 0q-15.15 3.2-26.83-6.62-11.67-9.81-11.67-26.2 0-11.96 8.22-22.16 8.21-10.19 20.41-13.15 88.09-20 143.65-88.54 55.57-68.54 55.57-160.87 0-106.85-73.59-181.51t-180.43-76.1h-20.72l39.24 39.24q8.24 8.48 8.24 21.96 0 13.47-8.24 21.95-9.48 9.48-23.08 9.48-13.6 0-22.07-9.48l-95.55-94.54q-5.48-5.48-7.83-11.32-2.36-5.83-2.36-12.55 0-6.96 2.36-12.67 2.35-5.72 7.83-11.2l95.55-96.02q8.47-8.24 22.07-8.24t23.08 8.24q8.24 9.48 8.24 23.07 0 13.6-8.24 22.08l-41.87 41.63h20.95q135.92 0 230.35 95.41 94.44 95.42 94.44 230.57 0 117.19-73.24 206.15-73.24 88.96-184.48 111.39Z","ad":"M801.36-248.41q-13.8 0-23.1-9.36-9.3-9.35-9.3-22.98 0-7.41 2.24-13.45 2.23-6.04 7.47-10.28 34-34 53.38-78.84 19.38-44.84 19.38-96.76t-19.38-96.8q-19.38-44.88-53.38-78.88-5.24-4.24-7.47-10.1-2.24-5.86-2.24-13.34 0-13.76 9.33-23.07 9.34-9.32 23.14-9.32 6.16 0 12.02 2.12 5.85 2.12 10.33 6.36 42.48 42.72 67.46 100.42 24.98 57.71 24.98 122.81t-24.2 121.65q-24.2 56.54-66.76 99.34-4.48 5.24-10.44 7.86-5.96 2.62-13.46 2.62Zm-116.9-117.35q-12.79 0-21.82-9.56-9.03-9.56-9.03-22.99 0-6.32 2.12-12.06t6.36-9.98q11.28-11.32 18.04-26.48t6.76-33.19q0-18.02-6.76-33.17-6.76-15.14-18.04-26.46-4.4-3.96-6.94-10.53-2.54-6.57-2.54-13.17 0-13.71 9.13-22.92t22.77-9.21q6.58 0 12.75 2.74t11.41 7.98q20 20 31.38 47.14 11.38 27.14 11.38 57.62 0 30.48-12 57.62-12 27.14-32.23 47.14-3.99 4.39-9.99 6.94-6 2.54-12.75 2.54ZM77.87-327.61q-13.74 0-22.96-9.37-9.21-9.38-9.21-23.02v-208.8q0-26.19 18.7-44.89t44.88-18.7h97.61q26.19 0 44.89 18.7t18.7 44.89V-360q0 13.64-9.44 23.02-9.44 9.37-23.17 9.37-13.74 0-22.96-9.37-9.21-9.38-9.21-23.02v-47.61h-95.22V-360q0 13.64-9.44 23.02-9.44 9.37-23.17 9.37Zm32.61-144.78h95.22v-95.22h-95.22v95.22Zm281.5 144.78q-10.87 0-17.98-7.2-7.11-7.2-7.11-17.8v-254.78q0-10.6 7.11-17.8 7.11-7.2 17.98-7.2h133q27.41 0 46.93 19.52t19.52 46.94v171.86q0 27.42-19.52 46.94-19.52 19.52-46.93 19.52h-133Zm39.45-64.78h95.46v-175.22h-95.46v175.22Z","dgs":"M61.37-247.98q-13.67-2.24-21.63-14.17-7.96-11.94-5.48-25.61 2.24-14.67 14.17-22.13 11.94-7.46 25.61-5.22L266-278.02q14.43 2.48 22.39 14.91 7.96 12.44 3.72 26.87-3.24 12.67-14.56 20.01-11.31 7.34-23.99 5.1L61.37-247.98Zm1.52-170.19q-13.67-3.24-20.39-15.8-6.72-12.55-3.24-26.23 3.48-13.43 15.91-20.27 12.44-6.83 25.87-3.6l227.2 62.61q13.43 3.48 20.15 15.8 6.72 12.31 3.48 25.75-3.24 13.91-15.67 20.75-12.44 6.83-26.11 3.36l-227.2-62.37ZM98.61-66.26q-13.44-2-22.89-12.32-9.46-10.31-7.46-24.99 1-13.67 11.82-23.25 10.81-9.57 25.49-7.57l355.67 32.48q32.8 2.76 59.73-15.52 26.92-18.29 35.44-49.33l52.48-190.72q2-7.52 1.38-15.8-.62-8.29-3.38-16.05l-75.28-177.04-4.72 113.5q-1.96 18.44-17.51 26.79-15.55 8.36-32.23-.12L184.89-577.13q-12.67-6.48-17.15-20.15-4.48-13.68 2.48-26.35 6.95-12.44 20.39-16.41 13.43-3.98 25.87 2.74l254.28 133.23 2.57-84.69q.04-16.96 7.4-31.03 7.36-14.08 19.31-22.8 9.48-7 20.46-10.26t21.98-1.98q10.67 2 20.13 7.46 9.46 5.46 14.17 16.13L669.3-415.2q8.24 17.72 9.36 37.44 1.12 19.72-4.12 39.43l-53.47 189.72q-15.24 53.68-62.06 87.25-46.81 33.58-103.49 28.34L98.61-66.26Zm184.04-689.2q11.2-8.95 24.87-7.83 13.68 1.12 22.87 12.07L442.07-618.5q-4.68 12.96-5.78 26.27-1.09 13.32-1.09 26.75l-65.61-34.26-91.42-108.46q-8.47-11.19-7.59-24.75.88-13.55 12.07-22.51Zm117.39-126.8q11.44-8.72 25.23-6.48 13.8 2.24 21.27 14.44l127.53 188.1q-19.87-6.23-39.09-5.5-19.22.74-36.94 9.22L390.85-835.52q-7.96-11.96-5.6-25.25 2.36-13.3 14.79-21.49Zm203-40.72q12.68-5.48 25.61-.26 12.94 5.22 18.42 18.65l108.32 261.7 56.18-61.94q10.71-11.71 25.05-17.07 14.34-5.36 29.29-4.36 13.2 1 24.42 5.6 11.21 4.59 19.69 13.07t11.22 18.56q2.74 10.07-.5 21.03L852.5-443.04q-5.24 18.95-16.72 34.67-11.48 15.72-28.19 26.96l-97.81 65.52q5.24-21.39 6.62-42.54 1.38-21.16-2.77-41.59l54.41-37.33q7.53-4.76 12.67-11.54 5.14-6.78 6.9-14.31l56-183.8-111.28 119.65-147.44-351.13q-5.72-12.67-.12-25.73 5.6-13.05 18.27-18.77ZM436.22-338.02Zm296.11-189.33Z","schedule":"M515.63-493.54v-165.87q0-14.12-9.29-23.38-9.28-9.25-23.29-9.25t-23.34 9.25q-9.34 9.26-9.34 23.38v178.93q0 6.72 2.24 12.4 2.24 5.69 6.72 11.23l141.13 146.13Q610.48-300 624.9-300.5q14.43-.5 24.38-10.22 9.96-9.71 9.96-23.91t-9.96-24.15L515.63-493.54Zm-35.6 419.52q-83.46 0-157.51-31.95-74.05-31.94-129.32-87.21-55.28-55.26-87.23-129.3-31.95-74.03-31.95-157.49 0-83.46 32-157.54 32-74.07 87.2-129.27 55.2-55.2 129.25-87.32 74.05-32.12 157.53-32.12t157.53 32.12q74.05 32.12 129.25 87.32 55.2 55.2 87.32 129.25 32.12 74.05 32.12 157.53T854.1-322.47q-32.12 74.05-87.32 129.25-55.2 55.2-129.24 87.2t-157.51 32ZM480-480Zm-.12 337.85q139.16 0 238.57-99.17 99.4-99.16 99.4-238.56t-99.37-238.69Q619.11-817.85 480-817.85q-139.28 0-238.57 99.26-99.28 99.25-99.28 238.59 0 139.52 99.28 238.68 99.28 99.17 238.45 99.17Z"};
+const svg=(k,extra='')=>`<svg viewBox="0 -960 960 960" ${extra} aria-hidden="true"><path d="${I[k]}" fill="currentColor"/></svg>`;
+const stag=s=>`<span class="stag" style="background:${SENDERS[s].c}">${SENDERS[s].n}</span>`;
+
+function epCard(ep,key,opts={}){
+  const sh=SHOW[ep.show]; const p=st.prog[ep.id]; const merk=st.merk.has('ep:'+ep.id);
+  return `<div class="card f" data-key="${key}" data-act="ep:${ep.id}" data-item="ep:${ep.id}">
+   <div class="thumb"><div class="art" style="${art(sh.h,ep.seed)}"></div>
+    ${isNew(ep)?'<span class="badge new">NEU</span>':''}
+    ${merk?`<span class="mark">${svg('merkfill','style="color:#fff"')}</span>`:''}
+    <span class="badge sender" style="background:${SENDERS[sh.s].c}">${sh.sub}</span>
+    <span class="badge dur">${mmss(ep.dur)}</span>
+    ${p?`<span class="prog"><i style="width:${Math.min(100,p/ep.dur*100)}%"></i></span>`:''}
+    ${st.watched.has(ep.id)&&!opts.noSeen?'<span class="seen">GESEHEN</span>':''}
+   </div>
+   <div class="ct">${opts.showFirst?esc(sh.t)+': ':''}${esc(ep.title)}</div>
+   <div class="cm"><span class="cs">${esc(sh.t)}</span><span class="cf">&nbsp;·&nbsp;${[sh.e.length>1?'Folge '+ep.n:'',p?'noch '+Math.round((ep.dur-p)/60)+' Min.':rel(ep.date)].filter(Boolean).join(' · ')}</span></div>
+  </div>`;
+}
+function showCard(sh,key){
+  const nNew=sh.eps.filter(isNew).length; const merk=st.merk.has('show:'+sh.id);
+  return `<div class="card f" data-key="${key}" data-act="show:${sh.id}" data-item="show:${sh.id}">
+   <div class="thumb"><div class="art" style="${art(sh.h,3)}"></div>
+    ${nNew?`<span class="badge new">${nNew} NEU</span>`:''}
+    ${merk?`<span class="mark">${svg('merkfill','style="color:#fff"')}</span>`:''}
+    <span class="badge sender" style="background:${SENDERS[sh.s].c}">${sh.sub}</span>
+   </div>
+   <div class="ct">${esc(sh.t)}</div>
+   <div class="cm">${sh.g} · ${sh.e.length>1?sh.e.length+' Folgen':mmss(sh.eps[0].dur)}${st.subs.has(sh.id)?' · abonniert':''}</div>
+  </div>`;
+}
+const row=(id,title,small,cards)=>cards.length?`<section class="sec" data-vanchor id="sec-${id}"><h2>${title}${small?` <small>${small}</small>`:''}</h2><div class="hrow">${cards.join('')}</div></section>`:'';
+
+function feed(filter){
+  return SHOWS.filter(s=>st.subs.has(s.id)&&(!filter||filter===s.id)).flatMap(s=>s.eps).sort((a,b)=>b.date-a.date);
+}
+function itemCard(key,k){ const [t,id]=key.split(':'); return t==='ep'?epCard(EP[id],k):showCard(SHOW[id],k); }
+const ENT = [
+ {t:'Highlights',items:['show:hafenrevier','ep:nachtzug-5','ep:zweiufer-1','ep:werkstatt-5','show:tiefsee','ep:sternwarte-5','ep:kueche-5']},
+ {t:'Serien',items:['show:hafenrevier','show:abgruende','show:nachtzug','show:moorbauern']},
+ {t:'Dokus und Reportagen',items:['show:tiefsee','show:alpenlicht','show:grenzland','ep:fernweh-5','show:werkstatt','ep:moorbauern-5']},
+ {t:'Wissen und Kultur',items:['show:sternwarte','ep:werkstatt-4','ep:tiefsee-4','show:fernweh','show:kueche']},
+ {t:'Filme',items:['ep:zweiufer-1','ep:abgruende-5']}
+];
+const sOf=it=>{const [t,id]=it.split(':'); return t==='ep'?SHOW[EP[id].show].s:SHOW[id].s;};
+function entRows(filter){ return ENT.map((r,i)=>{ const its=r.items.filter(it=>filter==='all'||sOf(it)===filter); const snd=[...new Set(its.map(sOf))].map(x=>SENDERS[x].n).join(', ');
+  return row('ent'+i,r.t,i===0?'aus den Empfehlungen von '+snd:snd,its.map((it,j)=>itemCard(it,`ent${i}-${j}`))); }).join(''); }
+
+/* ---------- screens ---------- */
+const topbar=()=>`<div class="topbar"></div>`;
+const renderHdr=()=>{ hdr.innerHTML=`<div class="rf f ${st.loading?'loading':''}" data-key="top-refresh" data-act="refresh:">${svg('refresh')}<span>${st.loading?'Lädt neu …':'Stand: '+st.updated}</span></div><div class="clock">Sa., 14. Nov. · 20:15</div>`; };
+const SCREENS = {
+ home(){
+  const cont=Object.keys(st.prog).map(id=>EP[id]).filter(e=>!st.watched.has(e.id));
+  const fresh=feed().filter(isNew);
+  const merk=[...st.merk];
+  const last=st.lastPlayed&&st.prog[st.lastPlayed]&&!st.watched.has(st.lastPlayed)?EP[st.lastPlayed]:null;
+  const ls=last&&SHOW[last.show];
+  const resume=last?`<section class="resume" data-vanchor><div class="rthumb"><div class="art" style="position:absolute;inset:0;${art(ls.h,last.seed)}"></div><span class="badge sender" style="background:${SENDERS[ls.s].c}">${ls.sub}</span></div>
+    <div><div class="eyebrow">Zuletzt gesehen</div><h3>${esc(last.title)}</h3><div class="rm">${esc(ls.t)}${ls.e.length>1?' · Folge '+last.n:''} · noch ${Math.round((last.dur-st.prog[last.id])/60)} Min.</div>
+    <div class="rbar"><i style="width:${st.prog[last.id]/last.dur*100}%"></i></div>
+    <div class="btns"><div class="btn f sub" data-key="res-play" data-act="play:${last.id}" data-item="ep:${last.id}">${svg('play')}Fortsetzen ab ${mmss(st.prog[last.id])}</div>
+    <div class="btn f" data-key="res-show" data-act="show:${ls.id}" data-item="show:${ls.id}">${svg('tv')}Zur Sendung</div></div></div></section>`:'';
+  return `<div class="vscroll">${topbar()}
+   ${resume}
+   ${row('cont','Weiterschauen','',cont.filter(e=>!last||e.id!==last.id).map((e,i)=>epCard(e,'c'+e.id)))}
+   ${row('new','Neu aus deinen Abos',fresh.length+' neue Folgen',fresh.map(e=>epCard(e,'n'+e.id)))}
+   ${row('merk','Merkliste','',merk.map(k=>itemCard(k,'m'+k)))}
+   ${entRows('all')}
+   <div style="height:420px"></div></div>`;
+ },
+ abos(){
+  const subs=SHOWS.filter(s=>st.subs.has(s.id));
+  const list=feed(st.aboFilter);
+  return `<div class="vscroll">${topbar()}
+   <div class="avs">
+    <div class="av f ${!st.aboFilter?'sel':''}" data-key="av-all" data-act="abo:"><div class="circ" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700">Alle</div><div class="nm">Alle Abos</div></div>
+    ${subs.map(s=>`<div class="av f ${st.aboFilter===s.id?'sel':''}" data-key="av-${s.id}" data-act="abo:${s.id}" data-item="show:${s.id}"><div class="circ"><div class="art" style="position:absolute;inset:0;${art(s.h,3)}"></div>${s.eps.some(isNew)?'<span class="dot"></span>':''}</div><div class="nm">${esc(s.t)}</div></div>`).join('')}
+   </div>
+   <section class="sec"><h2>${st.aboFilter?esc(SHOW[st.aboFilter].t):'Alle Folgen'} <small>neueste zuerst</small></h2>
+   <div class="grid grid4">${list.map(e=>epCard(e,'g'+e.id)).join('')}</div></section></div>`;
+ },
+ entdecken(){
+  const f=[['all','Alle Sender'],['ard','ARD'],['zdf','ZDF'],['s3','3sat'],['arte','arte']];
+  return `<div class="vscroll">${topbar()}
+   <div class="chips">${f.map(([k,n])=>`<div class="chip f ${st.entFilter===k?'sel':''}" data-key="ch-${k}" data-act="ent:${k}">${n}</div>`).join('')}</div>
+   ${entRows(st.entFilter)}<div style="height:420px"></div></div>`;
+ },
+ suche(){
+  const keys='abcdefghijklmnopqrstuvwxyzäöüß'.split('');
+  const q=st.q.trim().toLowerCase();
+  const shows=SHOWS.filter(s=>!q||s.t.toLowerCase().includes(q)||s.g.toLowerCase().includes(q));
+  const eps=q?Object.values(EP).filter(e=>e.title.toLowerCase().includes(q)&&SHOW[e.show].e.length>1):[];
+  const res=[...shows.map(s=>showCard(s,'rs'+s.id)),...eps.slice(0,9).map(e=>epCard(e,'re'+e.id))];
+  return `<div class="vscroll">${topbar()}<div class="search">
+   <div><div class="qbox">${svg('suche','style="width:34px;height:34px;color:var(--muted)"')}<span>${esc(st.q)}</span><span class="cur"></span></div>
+    <div class="kb">${keys.map(k=>`<div class="k f" data-key="k-${k}" data-act="key:${k}">${k}</div>`).join('')}
+     <div class="k f wide" data-key="k-space" data-act="key: ">Leerzeichen</div><div class="k f wide" data-key="k-del" data-act="key:DEL">Löschen</div></div>
+    <p style="color:var(--muted);font-size:21px;line-height:1.45;margin-top:26px">Durchsucht alle vier Mediatheken über MediathekViewWeb.</p></div>
+   <div><h2 style="font-family:var(--display);font-weight:600;font-size:34px;margin:6px 0 22px">${q?`Treffer für „${esc(st.q.trim())}“`:'Alle Sendungen'}</h2>
+    ${res.length?`<div class="grid">${res.join('')}</div>`:'<div class="empty" style="padding-left:0">Keine Sendung und keine Folge mit diesem Namen.</div>'}</div>
+  </div></div>`;
+ },
+ merkliste(){
+  const items=[...st.merk];
+  return `<div class="vscroll">${topbar()}<section class="sec"><h2>Merkliste <small>${items.length} Einträge aus allen Mediatheken</small></h2>
+   ${items.length?`<div class="grid grid4">${items.map(k=>itemCard(k,'ml'+k)).join('')}</div>`:'<div class="empty">Noch nichts gemerkt. Halte OK auf einer Kachel gedrückt und wähle Merken.</div>'}</section></div>`;
+ },
+ einstellungen(){
+  const o=[['home','Start','Weiterschauen, neue Folgen, Merkliste und die Empfehlungen der Sender'],['abos','Abos','Nur die Folgen deiner abonnierten Sendungen, neueste zuerst'],['merkliste','Merkliste','Was du dir aus allen vier Mediatheken gemerkt hast']];
+  return `<div class="vscroll">${topbar()}<section class="sec"><h2>Beim Öffnen der App anzeigen</h2></section>
+   <div class="opts">${o.map(([k,n,d])=>`<div class="opt f ${st.startScreen===k?'sel':''}" data-key="o-${k}" data-act="start:${k}"><div class="radio"></div><div><b>${n}</b><span>${d}</span></div></div>`).join('')}</div>
+   <section class="sec" style="margin-top:40px"><h2>Daten</h2></section>
+   <div class="opts"><div class="opt f" data-key="o-cache" data-act="cache:"><div class="radio" style="border:0">${svg('refresh','style="width:34px;height:34px"')}</div><div><b>Zwischenspeicher leeren</b><span>Neue Folgen und Empfehlungen werden einmal am Tag geladen, oben rechts jederzeit von Hand. Bis neue Daten da sind, bleiben die alten sichtbar. Vorschaubilder bleiben gespeichert.</span></div></div></div>
+   <div class="setnote">Der Fortschritt jeder Folge wird auf dem Fernseher gespeichert. Auf der Startseite kannst du die zuletzt gesehene Folge direkt fortsetzen.</div></div>`;
+ },
+ ep(){
+  const ep=EP[st.epId], sh=SHOW[ep.show], p=st.prog[ep.id], merk=st.merk.has('ep:'+ep.id), seen=st.watched.has(ep.id);
+  const until=new Date(ep.date.getTime()+180*864e5).toLocaleDateString('de-DE');
+  const others=sh.eps.filter(e=>e.id!==ep.id);
+  return `<div class="vscroll"><div class="hero eph"><div class="art" style="${art(sh.h,ep.seed)}"></div><div class="in">
+    <div class="kick">${stag(sh.s)} ${sh.sub} · ${esc(sh.t)}${sh.e.length>1?' · Folge '+ep.n:''}</div>
+    <h1>${esc(ep.title)}</h1>
+    <div class="facts"><span>${svg('schedule')}${Math.round(ep.dur/60)} Min.</span><span>${ep.date.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}</span><span>verfügbar bis ${until}</span><span class="q">HD</span>${ep.n%2?'<span class="q">UT</span>':''}${ep.n%3===0?`<span class="q" title="Audiodeskription">${svg('ad')}</span>`:''}${seen?'<span class="q">gesehen</span>':''}</div>
+    <p>${esc(ep.title)}: ${esc(sh.desc)}</p>
+    ${p?`<div class="epbar"><i style="width:${p/ep.dur*100}%"></i></div><div class="eprest">noch ${Math.round((ep.dur-p)/60)} Min.</div>`:''}
+    <div class="btns">
+     <div class="btn f sub" data-key="e-play" data-act="play:${ep.id}">${svg('play')}${p?'Fortsetzen ab '+mmss(p):'Abspielen'}</div>
+     ${p||seen?`<div class="btn f" data-key="e-from" data-act="from:${ep.id}">${svg('replay')}Von Anfang</div>`:''}
+     <div class="btn f" data-key="e-merk" data-act="merk:ep:${ep.id}">${svg(merk?'merkfill':'merkliste')}${merk?'Gemerkt':'Merken'}</div>
+     <div class="btn f" data-key="e-show" data-act="show:${sh.id}">${svg('tv')}Zur Sendung</div>
+    </div></div></div>
+   ${others.length?row('epmore','Weitere Folgen',esc(sh.t),others.map(e=>epCard(e,'eo'+e.id))):''}
+   <div style="height:300px"></div></div>`;
+ },
+ show(){
+  const sh=SHOW[st.showId]; const subbed=st.subs.has(sh.id); const merk=st.merk.has('show:'+sh.id);
+  const resume=sh.eps.find(e=>st.prog[e.id])||sh.eps.find(e=>!st.watched.has(e.id))||sh.eps[0];
+  return `<div class="vscroll"><div class="hero"><div class="art" style="${art(sh.h,3)}"></div><div class="in">
+    <div class="kick">${stag(sh.s)} ${sh.sub} · ${sh.g} · ${sh.e.length>1?sh.e.length+' Folgen':'Spielfilm'}</div>
+    <h1>${esc(sh.t)}</h1><p>${esc(sh.desc)}</p>
+    <div class="btns">
+     <div class="btn f" data-key="b-play" data-act="play:${resume.id}">${svg('play')}${st.prog[resume.id]?'Weiterschauen':'Abspielen'} · ${sh.e.length>1?'Folge '+resume.n:mmss(resume.dur)}</div>
+     <div class="btn f ${subbed?'subbed':'sub'}" data-key="b-sub" data-act="sub:${sh.id}">${svg(subbed?'check':'bell')}${subbed?'Abonniert':'Abonnieren'}</div>
+     ${subbed?`<div class="btn f" data-key="b-abo" data-act="aboset:${sh.id}">${svg('tune')}Abo anpassen</div>`:''}
+     <div class="btn f" data-key="b-merk" data-act="merk:show:${sh.id}">${svg(merk?'merkfill':'merkliste')}${merk?'Gemerkt':'Merken'}</div>
+    </div></div></div>
+   <section class="sec" data-vanchor><h2>Folgen <small>neueste zuerst</small></h2><div class="hrow">${sh.eps.map(e=>epCard(e,'se'+e.id,{noSeen:false})).join('')}</div></section>
+   ${row('more','Mehr von '+SENDERS[sh.s].n,'',SHOWS.filter(x=>x.s===sh.s&&x.id!==sh.id).map(x=>showCard(x,'mo'+x.id)))}
+   <div style="height:300px"></div></div>`;
+ }
+};
+const RAIL=[['home','Start'],['entdecken','Entdecken'],['suche','Suche'],['abos','Abos'],['merkliste','Merkliste'],['einstellungen','Einstellungen']];
+
+/* ---------- render & focus ---------- */
+let cur=null;
+function renderRail(){
+  const active=(st.screen==='show'||st.screen==='ep')?(st.stack[st.stack.length-1]||{}).screen:st.screen;
+  rail.innerHTML=`<div class="logo rlogo"><svg width="44" height="44" viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(20 37)"><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f" opacity=".3" transform="rotate(-27)"/><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f" opacity=".55" transform="rotate(-9)"/><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f" opacity=".8" transform="rotate(9)"/><g transform="rotate(27)"><rect x="-7.5" y="-27" width="15" height="20" rx="3" fill="#f4b63f"/><path d="M-2.6 -21v8l6.6-4z" fill="#231a05"/></g></g></svg><span>Quartett Mediathek</span></div>`+RAIL.map(([k,n])=>`<div class="ri f ${k===active?'active':''} ${k==='einstellungen'?'bottom':''}" data-key="r-${k}" data-act="nav:${k}">${svg(k==='home'?'home':k)}<span>${n}</span></div>`).join('');
+}
+function render(keepKey){
+  renderRail(); renderHdr();
+  const vs=main.querySelector('.vscroll'); const top=vs?vs.scrollTop:0;
+  const hs=[...main.querySelectorAll('.hrow,.avs,.chips')].map(e=>e.scrollLeft);
+  main.innerHTML=SCREENS[st.screen]();
+  if(keepKey!==undefined){
+    const nv=main.querySelector('.vscroll'); nv.style.scrollBehavior='auto'; nv.scrollTop=top;
+    main.querySelectorAll('.hrow,.avs,.chips').forEach((e,i)=>{e.style.scrollBehavior='auto';e.scrollLeft=hs[i]||0;});
+    requestAnimationFrame(()=>{nv.style.scrollBehavior='';main.querySelectorAll('.hrow,.avs,.chips').forEach(e=>e.style.scrollBehavior='');});
+    const el=keepKey&&document.querySelector(`[data-key="${CSS.escape(keepKey)}"]`);
+    if(el){focus(el,true);return;}
+  }
+}
+const firstF=()=>main.querySelector('.f:not(.rf)')||main.querySelector('.f');
+function enterScreen(){
+  render();
+  const k=st.lastKey[st.screen]; const el=(k&&main.querySelector(`[data-key="${CSS.escape(k)}"]`))||firstF();
+  if(el) focus(el);
+}
+function offTop(el,anc){ let y=0; while(el&&el!==anc){ y+=el.offsetTop; el=el.offsetParent; } return y; }
+function focus(el,silent){
+  if(cur) cur.classList.remove('focused');
+  cur=el; el.classList.add('focused');
+  const inRail=!!el.closest('#rail'); rail.classList.toggle('open',inRail);
+  if(el.closest('#main,#hdr')) st.lastKey[st.screen]=el.dataset.key;
+  if(el.closest('#hdr')){ const v0=main.querySelector('.vscroll'); if(v0) v0.scrollTop=0; }
+  const h=el.closest('.hrow,.avs,.chips');
+  if(h){ const l=el.offsetLeft-48, r=el.offsetLeft+el.offsetWidth+80;
+    if(l<h.scrollLeft) h.scrollLeft=l; else if(r>h.scrollLeft+h.clientWidth) h.scrollLeft=r-h.clientWidth; }
+  const v=el.closest('.vscroll');
+  if(v){ const a=el.closest('[data-vanchor]');
+    let target;
+    if(a) target=offTop(a,v)-(a.previousElementSibling&&a.previousElementSibling.classList.contains('topbar')?120:40);
+    else { const y=offTop(el,v); const bottom=y+el.offsetHeight;
+      if(y-140<v.scrollTop) target=y-140; else if(bottom+60>v.scrollTop+v.clientHeight) target=bottom+60-v.clientHeight; }
+    if(el.closest('.hero')||el.closest('.avs')||el.closest('.chips')||el.closest('.search .kb')) target=0;
+    if(target!==undefined) v.scrollTop=Math.max(0,target);
+  }
+}
+function zone(){
+  if(!overlay.hidden) return [...overlay.querySelectorAll('.f')];
+  if(!player.hidden) return [...player.querySelectorAll('.f')];
+  return null;
+}
+function nav(dir){
+  if(!player.hidden) showOsd();
+  const z=zone();
+  if(!z && cur && cur.closest('#rail')){
+    const items=[...rail.querySelectorAll('.f')]; const i=items.indexOf(cur);
+    if(dir==='up'&&i>0) focus(items[i-1]); else if(dir==='down'&&i<items.length-1) focus(items[i+1]);
+    else if(dir==='right'){ const k=st.lastKey[st.screen]; const el=(k&&main.querySelector(`[data-key="${CSS.escape(k)}"]`))||firstF(); if(el) focus(el); }
+    return;
+  }
+  const cands=z||[...main.querySelectorAll('.f'),...hdr.querySelectorAll('.f')];
+  if(!cur||!cands.includes(cur)){ if(cands[0]) focus(cands[0]); return; }
+  const c=cur.getBoundingClientRect(), sr=stage.getBoundingClientRect(), sc=sr.width/1920;
+  const cx=c.left+c.width/2, cy=c.top+c.height/2;
+  let best=null,bs=Infinity;
+  const vert=dir==='up'||dir==='down';
+  for(const el of cands){ if(el===cur) continue;
+    const r=el.getBoundingClientRect(); const x=r.left+r.width/2, y=r.top+r.height/2; const dx=x-cx, dy=y-cy;
+    if(vert && (r.right<sr.left+120*sc || r.left>sr.right)) continue;
+    let p,s;
+    if(dir==='right'){p=dx;s=Math.abs(dy);} if(dir==='left'){p=-dx;s=Math.abs(dy);}
+    if(dir==='down'){p=dy;s=Math.abs(dx);} if(dir==='up'){p=-dy;s=Math.abs(dx);}
+    if(p<=8*sc) continue;
+    if(!vert && s>Math.max(c.height,r.height)*0.6) continue;
+    const score=vert?p+s*1.2:p+s*4;
+    if(score<bs){bs=score;best=el;}
+  }
+  if(best) focus(best);
+  else if(!z && dir==='left'){ const a=rail.querySelector('.active')||rail.querySelector('.f'); focus(a); }
+}
+
+/* ---------- actions ---------- */
+let tt;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>toastEl.classList.remove('on'),1800); }
+function go(screen){ st.stack=[]; st.screen=screen; enterScreen(); }
+function openEp(id){ st.stack.push({screen:st.screen,key:cur&&cur.dataset.key}); st.epId=id; st.screen='ep'; st.lastKey.ep='e-play'; enterScreen(); main.querySelector('.vscroll').scrollTop=0; }
+function openShow(id){ st.stack.push({screen:st.screen,key:cur&&cur.dataset.key}); st.showId=id; st.screen='show'; st.lastKey.show='b-play'; enterScreen(); main.querySelector('.vscroll').scrollTop=0; }
+function toggleSub(id){ const sh=SHOW[id]; if(st.subs.has(id)){st.subs.delete(id);toast('Abo beendet: '+sh.t);} else {st.subs.add(id); st.seenUntil[id]=sh.eps[1]?sh.eps[1].date-1:NOW-864e5; toast('Abonniert: '+sh.t+'. Neue Folgen erscheinen unter Abos.');} }
+function toggleMerk(key){ const name=key.startsWith('ep:')?EP[key.slice(3)].title:SHOW[key.slice(5)].t; if(st.merk.has(key)){st.merk.delete(key);toast('Von der Merkliste entfernt');} else {st.merk.add(key);toast('Gemerkt: '+name);} }
+function act(el){
+  const a=el.dataset.act; if(!a) return; const i=a.indexOf(':'); const v=a.slice(0,i), arg=a.slice(i+1);
+  if(v==='nav') return go(arg);
+  if(v==='show') return openShow(arg);
+  if(v==='play') return openPlayer(arg);
+  if(v==='ep') return openEp(arg);
+  if(v==='from') return openPlayer(arg,0);
+  if(v==='sub'){ toggleSub(arg); return render(cur.dataset.key); }
+  if(v==='merk'){ toggleMerk(arg); return render(cur.dataset.key); }
+  if(v==='abo'){ st.aboFilter=arg||null; return render(cur.dataset.key); }
+  if(v==='ent'){ st.entFilter=arg; return render(cur.dataset.key); }
+  if(v==='start'){ st.startScreen=arg; try{localStorage.setItem('fr-start',arg)}catch(e){} toast('Die App startet jetzt mit: '+({home:'Start',abos:'Abos',merkliste:'Merkliste'})[arg]); return render(cur.dataset.key); }
+  if(v==='refresh'){ if(st.loading) return; st.loading=true; render(cur.dataset.key); setTimeout(()=>{ st.loading=false; st.updated='heute, 20:15'; render(cur&&cur.closest('#main,#hdr')?cur.dataset.key:undefined); if(cur&&!document.body.contains(cur)){ const el=document.querySelector('[data-key="top-refresh"]'); if(el) focus(el); } toast('Neu geladen: Startseiten von 4 Sendern, 6 Abos'); },1600); return; }
+  if(v==='cache'){ toast('Zwischenspeicher geleert, alles wird beim nächsten Öffnen neu geladen'); return; }
+  if(v==='aboset') return openAboSet(arg);
+  if(v==='af'){ const o=aboOpts(st.aboSet); if(arg==='done'){ closeMenu(true); toast('Abo angepasst: '+SHOW[st.aboSet].t); return; } o[arg]=!o[arg]; drawAboSet(); focus(overlay.querySelector(`[data-key="af-${arg}"]`)); return; }
+  if(v==='key'){ st.q = arg==='DEL'?st.q.slice(0,-1):(st.q+arg).slice(0,24); return render(cur.dataset.key); }
+  if(v==='m'){ return menuAction(arg); }
+  if(v==='p'){ return playerAction(arg); }
+}
+function back(){
+  if(!overlay.hidden){ closeMenu(); return; }
+  if(!player.hidden){ closePlayer(); return; }
+  if(cur&&cur.closest('#rail')){ if(st.screen!=='home') go('home'); return; }
+  if(st.stack.length){ const p=st.stack.pop(); st.screen=p.screen; st.lastKey[p.screen]=p.key||st.lastKey[p.screen]; enterScreen(); return; }
+  const a=rail.querySelector('.active'); if(a) focus(a);
+}
+
+/* ---------- long-press menu ---------- */
+let menuReturn=null;
+function openMenu(){
+  if(!overlay.hidden||!player.hidden||!cur) return;
+  const item=cur.dataset.item; if(!item){ toast('Für diese Schaltfläche gibt es kein Menü'); return; }
+  menuReturn=cur.dataset.key; st.menu=item;
+  const [t,id]=item.split(':'); const ep=t==='ep'?EP[id]:null; const sh=ep?SHOW[ep.show]:SHOW[id];
+  const rows=[];
+  if(ep) rows.push(['play','play','Abspielen']);
+  rows.push(['sub', st.subs.has(sh.id)?'check':'bell', st.subs.has(sh.id)?'Abo beenden':'Sendung abonnieren']);
+  rows.push(['merk', st.merk.has(item)?'merkfill':'merkliste', st.merk.has(item)?'Von der Merkliste entfernen':(ep?'Folge merken':'Sendung merken')]);
+  if(ep) rows.push(['seen','eye', st.watched.has(ep.id)?'Als ungesehen markieren':'Als gesehen markieren']);
+  if(st.screen!=='show'||st.showId!==sh.id) rows.push(['open','tv','Zur Sendung']);
+  overlay.innerHTML=`<div class="menu"><h3>${esc(ep?ep.title:sh.t)}</h3><div class="sm">${esc(sh.t)} · ${SENDERS[sh.s].n} ${ep&&sh.e.length>1?'· Folge '+ep.n:''}</div>
+   ${rows.map(([k,ic,l])=>`<div class="mi f" data-key="mi-${k}" data-act="m:${k}">${svg(ic)}${l}</div>`).join('')}</div>`;
+  overlay.hidden=false; focus(overlay.querySelector('.f'));
+}
+function closeMenu(rerender){
+  overlay.hidden=true; overlay.innerHTML=''; st.menu=null;
+  if(rerender) render(menuReturn); else { const el=document.querySelector(`[data-key="${CSS.escape(menuReturn)}"]`); if(el) focus(el); }
+}
+function menuAction(k){
+  const item=st.menu; const [t,id]=item.split(':'); const ep=t==='ep'?EP[id]:null; const sh=ep?SHOW[ep.show]:SHOW[id];
+  if(k==='play'){ closeMenu(); return openPlayer(ep.id); }
+  if(k==='open'){ closeMenu(); return openShow(sh.id); }
+  if(k==='sub') toggleSub(sh.id);
+  if(k==='merk') toggleMerk(item);
+  if(k==='seen'){ if(st.watched.has(ep.id)){st.watched.delete(ep.id);toast('Als ungesehen markiert');} else {st.watched.add(ep.id); delete st.prog[ep.id]; toast('Als gesehen markiert');} }
+  closeMenu(true);
+}
+
+/* ---------- subscription filters ---------- */
+st.aboOpts={};
+const aboOpts=id=>st.aboOpts[id]||(st.aboOpts[id]={full:true,related:false,ad:false,dgs:false});
+const CH={ard:['ard','ndr','swr','mdr','wdr','br','hr','rbb','sr','one','ard-alpha','tagesschau24'],zdf:['zdf','zdfneo','zdfinfo'],s3:['3sat'],arte:['arte.de']};
+function aboExpr(sh,o){ const w=sh.t.toLowerCase().replace(/[^a-zäöüß0-9 ]/g,'').trim().split(/\s+/).join(',');
+  const ch=(sh.s==='ard'?['ard',sh.sub.toLowerCase()]:CH[sh.s].slice(0,1)).map(c=>'!'+c).join(' ');
+  return esc(`${ch} #${w}${o.related?` #${w},spezial #${w},talk`:''}${o.full?' >20':''}`); }
+function openAboSet(id){ menuReturn=cur.dataset.key; st.aboSet=id; st.menu='abo'; drawAboSet(); overlay.hidden=false; focus(overlay.querySelector('.f')); }
+function drawAboSet(){
+  const sh=SHOW[st.aboSet], o=aboOpts(sh.id);
+  const rows=[['full','Nur ganze Folgen','Clips und Ausschnitte unter 20 Minuten ausblenden'],
+   ['related',`Auch „${sh.t} Spezial“ und „${sh.t} Talk“`,'Verwandte Themen mit gleichem Namen einschließen'],
+   ['ad','Fassung mit Audiodeskription','Statt der normalen Fassung zeigen, wenn es sie gibt'],
+   ['dgs','Fassung mit Gebärdensprache','Statt der normalen Fassung zeigen, wenn es sie gibt']];
+  const n=12+(o.full?0:7)+(o.related?9:0);
+  overlay.innerHTML=`<div class="menu wide"><h3>Abo anpassen</h3><div class="sm">${esc(sh.t)} · Thema genau „${esc(sh.t)}“ bei ${SENDERS[sh.s].n}</div>
+   ${rows.map(([k,l,d])=>`<div class="mi f" data-key="af-${k}" data-act="af:${k}"><div class="tx">${l}<small>${d}</small></div><span class="tg ${o[k]?'on':''}"></span></div>`).join('')}
+   <div class="expr">Suchausdruck: <code>${aboExpr(sh,o)}</code></div>
+   <div class="preview">In den letzten 3 Monaten: <b>${n} Folgen</b> im Feed. Dieselbe Folge auf mehreren Sendern, etwa ZDF und 3sat, erscheint nur einmal.</div>
+   <div class="mi f" data-key="af-done" data-act="af:done">${svg('check')}Fertig</div></div>`;
+}
+
+/* ---------- player ---------- */
+let ptimer, osdTimer, playerReturn;
+function openPlayer(id,from){
+  const ep=EP[id]; playerReturn=cur&&cur.dataset.key;
+  const start=from===0?0:(st.prog[id]&&!st.watched.has(id)?st.prog[id]:0);
+  st.player={id,t:start,playing:true,cc:false,speed:1};
+  if(start) toast('Weiter bei '+mmss(start));
+  player.hidden=false; drawPlayer(); focus(player.querySelector('[data-key="p-pp"]'));
+  clearInterval(ptimer); ptimer=setInterval(()=>{ const p=st.player; if(!p||!p.playing) return; p.t=Math.min(EP[p.id].dur,p.t+p.speed); updateBar(); },1000);
+  showOsd();
+}
+function drawPlayer(){
+  const p=st.player, ep=EP[p.id], sh=SHOW[ep.show]; const idx=sh.eps.indexOf(ep); const nxt=idx>0?sh.eps[idx-1]:null;
+  player.innerHTML=`<div class="art" style="${art(sh.h,ep.seed)}"></div><div class="shade"></div>
+   <div class="osd"><div class="ptop"><span><b>${esc(sh.t)}</b> · ${sh.sub}</span><span>MP4 · HD 720p${p.speed!==1?' · '+String(p.speed).replace('.',',')+'×':''}${p.cc?' · Untertitel an':''}</span></div>
+   <div class="pbot"><h2>${esc(ep.title)}</h2><div class="sub2">${sh.e.length>1?'Folge '+ep.n+' · ':''}${ep.date.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long'})} · verfügbar bis ${new Date(ep.date.getTime()+180*864e5).toLocaleDateString('de-DE')}</div>
+    <div class="seek f" data-key="p-bar" data-act="p:pp"><div class="bar"><i id="pbar"></i><span id="pghost"></span><b id="pknob"></b><span id="phint"></span></div></div>
+    <div class="times"><span id="pnow"></span><span id="pend"></span></div>
+    <div class="pc">
+     <div class="pb f" data-key="p-pp" data-act="p:pp">${svg(p.playing?'pause':'play')}</div>
+     <div class="gap"></div>
+     <div class="pb f" data-key="p-speed" data-act="p:speed">${svg('speed')}${String(p.speed).replace('.',',')}×</div>
+     <div class="pb f" data-key="p-cc" data-act="p:cc">${svg('cc')}${p.cc?'Untertitel an':'Untertitel'}</div>
+     <div class="pb f" data-key="p-merk" data-act="p:merk">${svg(st.merk.has('ep:'+ep.id)?'merkfill':'merkliste')}${st.merk.has('ep:'+ep.id)?'Gemerkt':'Merken'}</div>
+     ${nxt?`<div class="pb f" data-key="p-next" data-act="p:next">${svg('next')}Nächste Folge</div>`:''}
+    </div></div></div>`;
+  updateBar();
+}
+function updateBar(){ const p=st.player; if(!p) return; const d=EP[p.id].dur; const pct=p.t/d*100;
+  const b=$('#pbar'),k=$('#pknob'),g=$('#pghost'),h=$('#phint'); if(!b) return; b.style.width=pct+'%'; k.style.left=pct+'%'; $('#pnow').textContent=mmss(p.t); $('#pend').textContent='-'+mmss(d-p.t);
+  if(sk){ const to=Math.max(0,Math.min(d,sk.base+sk.delta)); g.style.left=(to/d*100)+'%'; g.style.opacity=1; h.style.left=(to/d*100)+'%'; h.style.opacity=1;
+    h.textContent=(sk.delta<0?'−':'+')+mmss(Math.abs(sk.delta))+(sk.scrub?' · '+stepLabel(sk.step):''); }
+  else { g.style.opacity=0; if(!hintHold) h.style.opacity=0; } }
+/* Seeking: a short press jumps 10 s back or 30 s ahead. Holding scrubs with growing steps; the jump happens on release. */
+let sk=null, hintHold=null;
+const STEPS=[[0,10],[1200,30],[2400,60],[3600,120],[5000,300]];
+const stepLabel=s=>s<60?s+' s':(s/60)+' Min.';
+function seekMode(){ return !player.hidden && overlay.hidden && cur && (cur.dataset.key==='p-bar' || player.classList.contains('hide')); }
+function seekPress(dir){
+  const p=st.player; showOsd(); const now=Date.now();
+  if(!sk){ sk={dir,start:now,last:now,base:p.t,delta:0,scrub:false,step:10}; updateBar(); return; }
+  if(now-sk.start<350 || now-sk.last<180) return;
+  const el=now-sk.start; sk.step=STEPS.filter(x=>el>=x[0]).pop()[1]; sk.scrub=true; sk.last=now; sk.delta+=dir*sk.step; updateBar();
+}
+function seekRelease(){
+  if(!sk) return; const p=st.player, d=EP[p.id].dur;
+  if(!sk.scrub) sk.delta=sk.dir>0?30:-10;
+  const delta=sk.delta; p.t=Math.max(0,Math.min(d,sk.base+delta)); sk.scrub=false; updateBar(); sk=null;
+  const h=$('#phint'); if(h){ h.textContent=(delta<0?'−':'+')+mmss(Math.abs(delta)); h.style.opacity=1; clearTimeout(hintHold); hintHold=setTimeout(()=>{hintHold=null; if(h) h.style.opacity=0;},900); }
+  updateBar(); showOsd();
+}
+function showOsd(){ player.classList.remove('hide'); clearTimeout(osdTimer); osdTimer=setTimeout(()=>{ if(st.player&&st.player.playing) player.classList.add('hide'); },4000); }
+function playerAction(k){
+  const p=st.player; const ep=EP[p.id]; const sh=SHOW[ep.show]; showOsd();
+  if(k==='pp'){ p.playing=!p.playing; }
+  if(k==='speed'){ const v=[0.75,1,1.25,1.5,2]; p.speed=v[(v.indexOf(p.speed)+1)%v.length]; }
+  if(k==='cc'){ p.cc=!p.cc; toast(p.cc?'Untertitel an':'Untertitel aus'); }
+  if(k==='merk') toggleMerk('ep:'+ep.id);
+  if(k==='next'){ saveProg(); const nxt=sh.eps[sh.eps.indexOf(ep)-1]; st.player={id:nxt.id,t:0,playing:true,cc:p.cc,speed:p.speed}; }
+  const key=cur.dataset.key; drawPlayer(); const el=player.querySelector(`[data-key="${key}"]`)||player.querySelector('[data-key="p-pp"]'); focus(el);
+}
+function saveProg(){ const p=st.player; if(!p) return; const d=EP[p.id].dur;
+  if(p.t>d*0.95){ st.watched.add(p.id); delete st.prog[p.id]; } else if(p.t>20){ st.prog[p.id]=p.t; st.lastPlayed=p.id; } }
+function closePlayer(){ saveProg(); clearInterval(ptimer); st.player=null; player.hidden=true; player.innerHTML=''; render(playerReturn); if(!cur||!document.body.contains(cur)){ const el=main.querySelector('.f'); if(el) focus(el);} }
+
+/* ---------- input ---------- */
+function press(k){
+  if(k==='ok'){ if(!player.hidden&&overlay.hidden&&player.classList.contains('hide')){ focus(player.querySelector('[data-key="p-pp"]')); return playerAction('pp'); } if(cur) act(cur); return; }
+  if(k==='back') return back();
+  if(k==='menu') return openMenu();
+  if(k==='play'){ if(!player.hidden) return playerAction('pp'); if(cur&&cur.dataset.item&&cur.dataset.item.startsWith('ep:')) return openPlayer(cur.dataset.item.slice(3)); return; }
+  nav(k);
+}
+let holdT=null, held=false;
+window.addEventListener('keydown',e=>{
+  if(e.target.closest&&e.target.closest('input,textarea')) return;
+  const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Escape:'back',Backspace:'back',' ':'play',m:'menu',M:'menu',p:'play'};
+  if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&seekMode()){ e.preventDefault(); seekPress(e.key==='ArrowRight'?1:-1); return; }
+  if(e.key==='Enter'){ e.preventDefault(); if(e.repeat) return; held=false; holdT=setTimeout(()=>{held=true;openMenu();},550); return; }
+  if(st.screen==='suche'&&!player.hidden===false&&overlay.hidden&&/^[a-zäöüß]$/i.test(e.key)&&e.key.length===1&&e.key!=='m'&&e.key!=='M'&&e.key!=='p'){ st.q=(st.q+e.key.toLowerCase()).slice(0,24); render(cur&&cur.dataset.key); e.preventDefault(); return; }
+  const k=map[e.key]; if(!k) return; e.preventDefault(); press(k);
+});
+window.addEventListener('keyup',e=>{ if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&sk){ seekRelease(); return; } if(e.key==='Enter'){ clearTimeout(holdT); if(!held) press('ok'); held=false; } });
+document.querySelectorAll('.rb[data-k]').forEach(b=>{
+  const k=b.dataset.k;
+  if(k==='ok'){
+    let t=null,h=false;
+    b.addEventListener('pointerdown',e=>{ e.preventDefault(); h=false; t=setTimeout(()=>{h=true;openMenu();},550); });
+    b.addEventListener('pointerup',()=>{ clearTimeout(t); if(!h) press('ok'); });
+    b.addEventListener('pointerleave',()=>clearTimeout(t));
+    b.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.stopPropagation(); }});
+  } else if(k==='left'||k==='right'){
+    let iv=null, seeking=false; const dir=k==='right'?1:-1;
+    b.addEventListener('pointerdown',e=>{ e.preventDefault(); if(seekMode()){ seeking=true; seekPress(dir); iv=setInterval(()=>seekPress(dir),60); } else { seeking=false; press(k); } });
+    const up=()=>{ clearInterval(iv); if(seeking){ seeking=false; seekRelease(); } };
+    b.addEventListener('pointerup',up); b.addEventListener('pointerleave',up);
+  } else b.addEventListener('click',()=>press(k));
+});
+document.querySelectorAll('.rb[data-j]').forEach(b=>b.addEventListener('click',()=>{
+  const j=b.dataset.j; if(!overlay.hidden) closeMenu(); if(!player.hidden) closePlayer();
+  if(j==='home'||j==='abos'||j==='suche') go(j);
+  if(j==='settings') go('einstellungen');
+  if(j==='restart'){ go(st.startScreen); toast('App gestartet mit: '+({home:'Start',abos:'Abos',merkliste:'Merkliste'})[st.startScreen]); }
+  if(j==='show'){ go('home'); openShow('hafenrevier'); }
+  if(j==='ep'){ go('home'); openEp('abgruende-3'); }
+  if(j==='player'){ go('home'); const el=main.querySelector('[data-key="cabgruende-3"]'); if(el) focus(el); openPlayer('abgruende-3'); }
+  if(j==='menu'){ go('home'); const el=main.querySelector('.f[data-item^="ep:"]'); if(el){ focus(el); openMenu(); } }
+  b.blur();
+}));
+stage.addEventListener('click',e=>{
+  const el=e.target.closest('.f'); if(!el) return;
+  if(!player.hidden&&!el.closest('#player')) return;
+  if(!overlay.hidden&&!el.closest('#overlay')){ closeMenu(); return; }
+  focus(el); act(el);
+});
+stage.addEventListener('contextmenu',e=>{ const el=e.target.closest('.f'); if(!el) return; e.preventDefault(); focus(el); openMenu(); });
+player.addEventListener('mousemove',showOsd);
+
+/* ---------- scale ---------- */
+const wrap=$('#wrap');
+function fit(){ stage.style.transform=`scale(${wrap.clientWidth/1920})`; }
+new ResizeObserver(fit).observe(wrap); fit();
+
+go(st.startScreen);
+})();
+</script>

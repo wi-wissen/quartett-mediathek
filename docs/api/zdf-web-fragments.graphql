@@ -1,0 +1,788 @@
+fragment LogoImageSizes on ImageLayout {
+  dim380X170
+  dim760X340
+  original
+}
+
+fragment TeaserLogoImage on ImagePropertyConnection {
+  layouts {
+    ...LogoImageSizes
+  }
+}
+
+fragment TeaserContentOwner on ContentOwner {
+  details
+  title
+}
+
+fragment NotClickableStreamingOptions on IStreamingOptions {
+  ad
+  dgs
+  ut
+  ks
+  ov
+  fskMetaCollection {
+    id
+    canonical
+    title
+  }
+}
+
+fragment MetaCollectionLink on MetaCollection {
+  id
+  canonical
+  title
+  transformedValue
+  structuralMetadata {
+    isChildrenContent
+  }
+}
+
+fragment PublicationFormMetaOnSmartCollection on ISmartCollectionStructuralMetadata {
+  publicationFormMetaCollection {
+    title
+    transformedValue
+    ...MetaCollectionLink
+  }
+}
+
+fragment GenreMetaOnSmartCollection on ISmartCollectionStructuralMetadata {
+  genreMetaCollection {
+    title
+    transformedValue
+    ...MetaCollectionLink
+  }
+}
+
+fragment TeaserMoodLabels on IVisualDimensions {
+  moods(first: 1) {
+    nodes {
+      level
+      mood
+    }
+  }
+}
+
+fragment VideoSmartCollectionData on ISmartCollection {
+  id
+  title
+  canonical
+  collectionType
+  editorialDate
+  isCampaign
+  logo {
+    ...TeaserLogoImage
+  }
+  teaser {
+    title
+  }
+  contentOwner {
+    ...TeaserContentOwner
+  }
+  streamingOptions {
+    ...NotClickableStreamingOptions
+  }
+  structuralMetadata {
+    isChildrenContent
+    ...PublicationFormMetaOnSmartCollection
+    ...GenreMetaOnSmartCollection
+    visualDimension {
+      ...TeaserMoodLabels
+    }
+  }
+}
+
+fragment LiveMediaFragment on LiveMedia {
+  ... on LiveMedia {
+    liveMediaType
+    plannedStart
+    plannedStop
+    editorialStart
+    editorialStop
+    start
+    stop
+    state
+    tvService
+    geoLocation
+  }
+}
+
+fragment VodMediaFragment on VodMedia {
+  ... on VodMedia {
+    vodMediaType
+    duration
+    downloadAllowed
+    streamAnchorTags {
+      nodes {
+        anchorLabel
+        anchorOffset
+      }
+    }
+    geoLocation
+  }
+}
+
+fragment CurrentMedia on VideoCurrentMediaConnection {
+  nodes {
+    ptmdTemplate
+    ...LiveMediaFragment
+    ...VodMediaFragment
+  }
+}
+
+fragment ScheduledMedia on ScheduledMedia {
+  videoType
+  availableFrom
+  availableTo
+  editorialStart
+  editorialStop
+}
+
+fragment TeaserImageSizes on ImageLayout {
+  dim276X311
+  dim384X216
+  dim640X720
+  dim768X432
+  original
+}
+
+fragment TeaserImage on ImagePropertyConnection {
+  layouts {
+    ...TeaserImageSizes
+  }
+}
+
+fragment PublicationFormMetaOnVideo on VideoStructuralMetadata {
+  publicationFormMetaCollection {
+    title
+    transformedValue
+    ...MetaCollectionLink
+  }
+}
+
+fragment GenreMetaOnVideo on VideoStructuralMetadata {
+  genreMetaCollection {
+    title
+    transformedValue
+    ...MetaCollectionLink
+  }
+}
+
+fragment VideoTeaserData on Video {
+  id
+  title
+  canonical
+  newVideoContentStatus: newContentStatus
+  episodeInfo {
+    episodeNumber
+    seasonNumber
+  }
+  smartCollection {
+    ...VideoSmartCollectionData
+  }
+  currentMedia {
+    ...CurrentMedia
+  }
+  currentMediaType
+  contentType
+  scheduledMedia {
+    ...ScheduledMedia
+  }
+  editorialDate
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+    sourceVariant
+    enableAudioDescription
+    enableSubtitle
+    streamAnchorTagId
+    externalStreamAnchorTag {
+      sceneId
+      showEventHighlights
+      duration
+    }
+  }
+  structuralMetadata {
+    isChildrenContent
+    ...PublicationFormMetaOnVideo
+    ...GenreMetaOnVideo
+    visualDimension {
+      ...TeaserMoodLabels
+    }
+  }
+  streamingOptions {
+    ...NotClickableStreamingOptions
+  }
+  contentOwner {
+    ...TeaserContentOwner
+  }
+  availability {
+    fskBlocked
+    vod {
+      visibleTo
+      endDate
+      fsk
+    }
+    broadcast {
+      effectiveAirtimeBegin
+      effectiveAirtimeEnd
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment ResponseMetadataFragment on Query {
+  responseMetadata @client {
+    cacheRefresh
+    cacheStatus
+  }
+}
+
+fragment TeaserBackgroundVideo on Video {
+  id
+  canonical
+  structuralMetadata {
+    isChildrenContent
+  }
+  availability {
+    fskBlocked
+    vod {
+      fsk
+    }
+  }
+  currentMedia {
+    ...CurrentMedia
+  }
+}
+
+fragment NotificationFragment on Video {
+  id
+  title
+  editorialDate
+  canonical
+  teaser {
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  smartCollection {
+    id
+    title
+    canonical
+    structuralMetadata {
+      ...PublicationFormMetaOnSmartCollection
+    }
+  }
+  structuralMetadata {
+    isChildrenContent
+  }
+  currentMedia {
+    nodes {
+      ... on VodMedia {
+        geoLocation
+      }
+      ... on LiveMedia {
+        plannedStart
+        editorialStart
+        editorialStop
+        start
+        stop
+        state
+        geoLocation
+      }
+    }
+  }
+  availability {
+    fskBlocked
+    vod {
+      fsk
+      visibleTo
+      visible
+      endDate
+    }
+  }
+}
+
+fragment ISmartCollectionTeaserData on ISmartCollection {
+  id
+  title
+  canonical
+  collectionType
+  editorialDate
+  endDate
+  isCampaign
+  logo {
+    ...TeaserLogoImage
+  }
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  contentOwner {
+    ...TeaserContentOwner
+  }
+  streamingOptions {
+    ...NotClickableStreamingOptions
+  }
+  newContentStatus
+  structuralMetadata {
+    isChildrenContent
+    ...PublicationFormMetaOnSmartCollection
+    ...GenreMetaOnSmartCollection
+    visualDimension {
+      ...TeaserMoodLabels
+    }
+  }
+  heroTrailers: trailers(first: 1, sortBy: {field: HERO_TRAILER, direction: DESC}) {
+    nodes {
+      ...TeaserBackgroundVideo
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+  ... on ISeriesSmartCollection {
+    countSeasons
+    countEpisodes
+  }
+  ... on MovieSmartCollection {
+    teaser {
+      sourceVariant
+      enableAudioDescription
+      enableSubtitle
+    }
+    video {
+      id
+      canonical
+      structuralMetadata {
+        isChildrenContent
+      }
+      availability {
+        fskBlocked
+        vod {
+          visibleTo
+          endDate
+          fsk
+        }
+      }
+      currentMedia {
+        ...CurrentMedia
+      }
+      tracking {
+        piano(filter: click)
+      }
+    }
+  }
+}
+
+fragment SCRecoModelData on ISmartCollection {
+  ... on DefaultNoSectionsSmartCollection {
+    recoModel
+  }
+  ... on DefaultWithSectionsSmartCollection {
+    recoModel
+  }
+  ... on SeasonSeriesSmartCollection {
+    recoModel
+  }
+  ... on EndlessSeriesSmartCollection {
+    recoModel
+  }
+  ... on HybridBingeSeriesSmartCollection {
+    recoModel
+  }
+  ... on MovieSmartCollection {
+    recoModel
+  }
+  ... on MiniSeriesSmartCollection {
+    recoModel
+  }
+}
+
+fragment MetaCollectionTeaserData on MetaCollection {
+  id
+  canonical
+  title
+  editorialDate
+  metaType
+  contentOwners {
+    nodes {
+      ...TeaserContentOwner
+    }
+  }
+  logo {
+    ...TeaserLogoImage
+  }
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  structuralMetadata {
+    isChildrenContent
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment CuratedCollectionTeaserData on CuratedCollection {
+  id
+  canonical
+  editorialDate
+  logo {
+    ...TeaserLogoImage
+  }
+  title
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  structuralMetadata {
+    isChildrenContent
+  }
+  tracking {
+    piano(filter: click)
+  }
+  trailer {
+    ...TeaserBackgroundVideo
+  }
+}
+
+fragment LiveTvTeaserData on LiveTv {
+  id
+  canonical
+  title
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment CatalogTeaserData on Catalog {
+  id
+  canonical
+  title
+  catalogTeaser: teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  structuralMetadata {
+    isChildrenContent
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment TextPageTeaserData on TextPage {
+  id
+  canonical
+  title
+  structuralMetadata {
+    isChildrenContent
+  }
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment CommonImageSizes on ImageLayout {
+  dim1200X480
+  dim1280X720
+  dim1800X720
+  dim1920X1080
+  dim276X311
+  dim314X314
+  dim380X170
+  dim384X216
+  dim640X720
+  dim760X340
+  dim768X432
+  original
+}
+
+fragment PromoTeaserFragment on PromoTeaser {
+  id
+  webLink
+  teaser {
+    title
+    imageWithoutLogo {
+      layouts {
+        ...CommonImageSizes
+      }
+    }
+  }
+  image {
+    layouts {
+      ...CommonImageSizes
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment ExternalLinkTeaserData on ExternalLink {
+  id
+  url
+  title
+  teaser {
+    title
+    description
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment DownloadTeaserDataFragment on DownloadLink {
+  id
+  title
+  url
+  fileSizeLabel
+  teaser {
+    title
+    description
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment ZappingChannelTeaserData on ZappingChannel {
+  id
+  channelId
+  title
+  teaser {
+    title
+    imageWithoutLogo {
+      ...TeaserImage
+    }
+  }
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment UnifiedTeaserTileData on TeaserDocument {
+  ...ISmartCollectionTeaserData
+  ...SCRecoModelData
+  ...MetaCollectionTeaserData
+  ...CuratedCollectionTeaserData
+  ...VideoTeaserData
+  ...LiveTvTeaserData
+  ...CatalogTeaserData
+  ...TextPageTeaserData
+  ...PromoTeaserFragment
+  ...ExternalLinkTeaserData
+  ...DownloadTeaserDataFragment
+  ...ZappingChannelTeaserData
+  ... on SpecialPage {
+    id
+    canonical
+    title
+  }
+  ... on DynamicTeaser {
+    id
+  }
+}
+
+fragment ContinueWatchingVideo on Video {
+  ...VideoTeaserData
+  recoModel
+  smartCollection {
+    teaser {
+      imageWithoutLogo {
+        ...TeaserImage
+      }
+    }
+  }
+}
+
+fragment GridImageSizes on ImageLayout {
+  dim1280X720
+}
+
+fragment VisualDimensionsFragment on IVisualDimensions {
+  moods(first: 1) {
+    nodes {
+      level
+      mood
+      metaCollection {
+        ...MetaCollectionLink
+      }
+    }
+  }
+}
+
+fragment StageImageSizes on ImageLayout {
+  ...GridImageSizes
+  dim1920X1080
+}
+
+fragment LogoImageFragment on ImagePropertyConnection {
+  altText
+  layouts {
+    ...LogoImageSizes
+  }
+}
+
+fragment ContentOwner on ContentOwner {
+  ...TeaserContentOwner
+  id
+  metaCollection {
+    ...MetaCollectionLink
+  }
+}
+
+fragment ISmartCollectionStructuralMetaData on ISmartCollectionStructuralMetadata {
+  contentFamily
+  ...PublicationFormMetaOnSmartCollection
+  visualDimension {
+    ...VisualDimensionsFragment
+  }
+  ...GenreMetaOnSmartCollection
+  isChildrenContent
+}
+
+fragment BackgroundVideo on Video {
+  ...TeaserBackgroundVideo
+  tracking {
+    piano(filter: click)
+  }
+}
+
+fragment VideoStructuralMetaData on VideoStructuralMetadata {
+  contentFamily
+  ...PublicationFormMetaOnVideo
+  visualDimension {
+    ...VisualDimensionsFragment
+  }
+  ...GenreMetaOnVideo
+  isChildrenContent
+}
+
+fragment ImageFragment on ImagePropertyConnection {
+  altText
+  layouts {
+    ...CommonImageSizes
+  }
+}
+
+fragment VideoFragment on Video {
+  id
+  canonical
+  title
+  newContentStatus
+  sharingUrl
+  editorialDate
+  productionYear
+  contentOwner {
+    ...ContentOwner
+  }
+  availability {
+    fskBlocked
+    vod {
+      visibleTo
+      visibleFrom
+      endDate
+      fsk
+    }
+  }
+  teaser {
+    title
+    imageWithoutLogo {
+      ...ImageFragment
+    }
+    description
+    sourceVariant
+    streamAnchorTagId
+    externalStreamAnchorTag {
+      showEventHighlights
+      sceneId
+    }
+  }
+  episodeInfo {
+    seasonNumber
+    episodeNumber
+  }
+  structuralMetadata {
+    isChildrenContent
+  }
+  streamingOptions {
+    ...NotClickableStreamingOptions
+  }
+  currentMedia {
+    ...CurrentMedia
+  }
+  scheduledMedia {
+    ...ScheduledMedia
+  }
+  smartCollection {
+    canonical
+    collectionType
+  }
+  embeddingPossible
+  longInfoText
+  tracking {
+    piano
+    zdf
+  }
+}
+
+fragment SeasonWithEpisodes on SeasonsConnection {
+  nodes {
+    id
+    title
+    number
+    countEpisodes
+    newContentStatus
+    episodes(
+      first: $episodesPageSize
+      after: $episodesAfter
+      sortBy: $episodesSortBy
+      filterBy: $episodesFilterBy
+    ) {
+      nodes {
+        ...VideoFragment
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English is the default. German lives in values-de and is used when the device language is German. -->
+<resources>
+    <string name="app_name" translatable="false">Quartett Mediathek</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_discover">Discover</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_subscriptions">Subscriptions</string>
+    <string name="nav_bookmarks">Watchlist</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="refresh_state">Updated: %1$s</string>
+    <string name="refreshing">Refreshing …</string>
+
+    <string name="row_last_watched">Last watched</string>
+    <string name="row_continue">Continue watching</string>
+    <string name="row_new_from_subscriptions">New from your subscriptions</string>
+    <string name="row_bookmarks">Watchlist</string>
+
+    <string name="action_resume_at">Resume at %1$s</string>
+    <string name="action_play">Play</string>
+    <string name="action_from_start">From the beginning</string>
+    <string name="action_bookmark">Add to watchlist</string>
+    <string name="action_bookmarked">On watchlist</string>
+    <string name="action_to_show">Go to show</string>
+    <string name="action_subscribe">Subscribe</string>
+    <string name="action_subscribed">Subscribed</string>
+    <string name="action_adjust_subscription">Adjust subscription</string>
+
+    <string name="badge_new">NEW</string>
+    <string name="episode_number">Episode %1$d</string>
+    <string name="minutes_left">%1$d min left</string>
+
+    <string name="category_highlights">Highlights</string>
+    <string name="category_series">Series</string>
+    <string name="category_documentaries">Documentaries</string>
+    <string name="category_knowledge_culture">Knowledge and culture</string>
+    <string name="category_movies">Movies</string>
+</resources>

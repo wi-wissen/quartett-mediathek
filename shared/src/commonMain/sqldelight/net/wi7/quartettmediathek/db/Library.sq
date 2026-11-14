@@ -1,0 +1,85 @@
+-- Everything the user owns lives on the device: subscriptions, bookmarks, playback progress.
+
+CREATE TABLE subscription (
+    id TEXT NOT NULL PRIMARY KEY,
+    -- Subscription serialized as JSON (topics, broadcasters, min duration, preferred variant)
+    json TEXT NOT NULL,
+    seen_until_epoch_ms INTEGER NOT NULL,
+    created_at_epoch_ms INTEGER NOT NULL
+);
+
+CREATE TABLE bookmark (
+    -- "show:<source>:<key>" or "episode:<source>:<key>"
+    item_key TEXT NOT NULL PRIMARY KEY,
+    -- Display snapshot (title, show, broadcaster, image, website URL) as JSON so the list renders offline
+    snapshot_json TEXT NOT NULL,
+    created_at_epoch_ms INTEGER NOT NULL
+);
+
+CREATE TABLE playback_progress (
+    episode_key TEXT NOT NULL PRIMARY KEY,
+    snapshot_json TEXT NOT NULL,
+    position_seconds INTEGER NOT NULL,
+    duration_seconds INTEGER NOT NULL,
+    watched INTEGER NOT NULL DEFAULT 0,
+    updated_at_epoch_ms INTEGER NOT NULL
+);
+
+CREATE TABLE http_cache (
+    cache_key TEXT NOT NULL PRIMARY KEY,
+    body TEXT NOT NULL,
+    fetched_at_epoch_ms INTEGER NOT NULL
+);
+
+CREATE TABLE setting (
+    name TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- Subscriptions
+allSubscriptions:
+SELECT * FROM subscription ORDER BY created_at_epoch_ms;
+
+upsertSubscription:
+INSERT OR REPLACE INTO subscription(id, json, seen_until_epoch_ms, created_at_epoch_ms) VALUES (?, ?, ?, ?);
+
+deleteSubscription:
+DELETE FROM subscription WHERE id = ?;
+
+-- Bookmarks
+allBookmarks:
+SELECT * FROM bookmark ORDER BY created_at_epoch_ms DESC;
+
+upsertBookmark:
+INSERT OR REPLACE INTO bookmark(item_key, snapshot_json, created_at_epoch_ms) VALUES (?, ?, ?);
+
+deleteBookmark:
+DELETE FROM bookmark WHERE item_key = ?;
+
+-- Progress
+progressFor:
+SELECT * FROM playback_progress WHERE episode_key = ?;
+
+continueWatching:
+SELECT * FROM playback_progress WHERE watched = 0 AND position_seconds > 0 ORDER BY updated_at_epoch_ms DESC LIMIT ?;
+
+upsertProgress:
+INSERT OR REPLACE INTO playback_progress(episode_key, snapshot_json, position_seconds, duration_seconds, watched, updated_at_epoch_ms)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- HTTP cache
+cached:
+SELECT * FROM http_cache WHERE cache_key = ?;
+
+putCache:
+INSERT OR REPLACE INTO http_cache(cache_key, body, fetched_at_epoch_ms) VALUES (?, ?, ?);
+
+clearCache:
+DELETE FROM http_cache;
+
+-- Settings
+setting:
+SELECT value FROM setting WHERE name = ?;
+
+putSetting:
+INSERT OR REPLACE INTO setting(name, value) VALUES (?, ?);
