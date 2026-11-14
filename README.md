@@ -6,6 +6,17 @@ Mediatheken, Weiterschauen und die Empfehlungen der Sender.
 
 Kein Konto, kein eigener Server: Abos, Merkliste und Fortschritt bleiben auf deinem Fernseher.
 
+## So sieht es aus
+
+| Start | Sendung |
+| --- | --- |
+| ![Startseite mit Weiterschauen und neuen Folgen aus den Abos](app/src/test/screenshots/de_home.png) | ![Sendungsseite mit Folgen](app/src/test/screenshots/de_show.png) |
+| **Folge** | **Abos** |
+| ![Folgenseite mit Beschreibung und Fortschritt](app/src/test/screenshots/de_episode.png) | ![Alle Folgen der abonnierten Sendungen, neueste zuerst](app/src/test/screenshots/de_subscriptions.png) |
+
+Die Bilder stammen aus den automatischen Screenshot-Tests und zeigen erfundene Beispielsendungen statt echter
+Vorschaubilder. In der App siehst du die Inhalte und Bilder der Sender.
+
 ## Installation auf dem Fernseher
 
 Die App gibt es nicht im Play Store, sie wird per Sideloading installiert.
