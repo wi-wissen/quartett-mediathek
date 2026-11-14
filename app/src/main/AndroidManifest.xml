@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Self-updater: install the downloaded APK through PackageInstaller -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Android TV: no touchscreen; leanback is required so the app shows on the TV launcher -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -26,5 +28,8 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Result of the self-update install session (explicit intent from our own PendingIntent) -->
+        <receiver android:name=".update.UpdateInstallReceiver" android:exported="false" />
     </application>
 </manifest>

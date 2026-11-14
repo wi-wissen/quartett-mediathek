@@ -1,0 +1,16 @@
+{
+  "tag_name": "v0.1.2",
+  "name": "Quartett Mediathek 0.1.2",
+  "html_url": "https://github.com/wi-wissen/quartett-mediathek/releases/tag/v0.1.2",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-11-14T17:58:26Z",
+  "assets": [
+    {
+      "name": "quartett-mediathek.apk",
+      "content_type": "application/vnd.android.package-archive",
+      "size": 3162376,
+      "browser_download_url": "https://github.com/wi-wissen/quartett-mediathek/releases/download/v0.1.2/quartett-mediathek.apk"
+    }
+  ]
+}

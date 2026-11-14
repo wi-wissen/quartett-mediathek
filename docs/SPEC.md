@@ -260,3 +260,17 @@ mockup CSS px / 2 roughly, e.g. 416 px tile = 208.dp).
   to the newest version; the short link **https://t1p.de/qmedia** points there (for sideloading via a downloader
   app on the TV).
 - Signing secrets: `QM_KEYSTORE_BASE64`, `QM_KEYSTORE_PASSWORD`, `QM_KEY_ALIAS`, `QM_KEY_PASSWORD`.
+- **Self-updater** (`app/.../update/`, pure logic in `shared/.../update/UpdateLogic.kt`): the update source is set at
+  build time, never in the repository. Gradle property `updateRepo` (`owner/name`) becomes `BuildConfig.UPDATE_REPO`;
+  empty = updater disabled. `release.yml` passes `-PupdateRepo=${{ vars.UPDATE_REPO || github.repository }}`, so the
+  building repository is the default and the repository variable `UPDATE_REPO` can point elsewhere.
+  - Check: `GET https://api.github.com/repos/{repo}/releases/latest` (unauthenticated), tag `v1.2.3` -> versionCode
+    with the same formula as Gradle, compared with `BuildConfig.VERSION_CODE`; asset `quartett-mediathek.apk`.
+    On app start at most once per 24 h (time in `SharedPreferences` "updater"), manually via Settings.
+  - UI: dialog on start "Version x is available – Install now / Later" (Later hides it for 24 h); Settings section
+    "App" (Settings order: start screen, App, Data) with version, last check, "Check for updates" and, when a newer
+    version exists, "Update now" with download progress.
+  - Install: download to `cacheDir/updates` (HttpURLConnection, follows the redirect to objects.githubusercontent.com),
+    then `PackageInstaller` session, result in `UpdateInstallReceiver` (starts the system confirmation). Needs
+    `REQUEST_INSTALL_PACKAGES`; if `canRequestPackageInstalls()` is false the "unknown apps" settings page of this
+    package opens. Same signing key = update over the existing app, data is kept.

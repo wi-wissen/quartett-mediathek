@@ -135,4 +135,25 @@
     <string name="settings_clear_cache_desc">New episodes and recommendations are loaded once a day, or by hand at the top right. Until new data arrives, the old stays visible. Thumbnails stay stored.</string>
     <string name="settings_cache_cleared">Cache cleared. Data is loaded again on the next refresh.</string>
     <string name="settings_note">The progress of every episode is stored on this TV. On Home you can resume the last watched episode directly.</string>
+
+    <!-- Self-updater -->
+    <string name="settings_app_title">App</string>
+    <string name="update_version">Version %1$s</string>
+    <string name="update_last_check">Last check: %1$s</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_check_desc_idle">The app also checks once a day.</string>
+    <string name="update_checking">Checking for updates …</string>
+    <string name="update_up_to_date">You have the latest version.</string>
+    <string name="update_check_failed">Could not check for updates. Is the TV online?</string>
+    <string name="update_install">Update now</string>
+    <string name="update_install_desc">Version %1$s is available.</string>
+    <string name="update_downloading">Downloading version %1$s … %2$d %%</string>
+    <string name="update_needs_permission">Allow this app to install apps in the settings that just opened, then come back and select Update now again.</string>
+    <string name="update_installing">Waiting for the system installer. Confirm there; the app restarts afterwards.</string>
+    <string name="update_download_failed">Download failed. Please try again.</string>
+    <string name="update_install_failed">The installation did not work. Please try again.</string>
+    <string name="update_dialog_title">Version %1$s is available</string>
+    <string name="update_dialog_text">You have version %1$s. Your subscriptions and watched episodes are kept.</string>
+    <string name="update_dialog_install">Install now</string>
+    <string name="update_dialog_later">Later</string>
 </resources>

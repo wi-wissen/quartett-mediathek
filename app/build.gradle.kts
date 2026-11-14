@@ -13,6 +13,9 @@ val appVersionCode = appVersionName.substringBefore('-').split('.').map { it.toI
     .let { (it.getOrElse(0) { 0 } * 10000) + (it.getOrElse(1) { 0 } * 100) + it.getOrElse(2) { 0 } }
     .coerceAtLeast(1)
 
+// Self-updater source, e.g. -PupdateRepo=owner/name (GitHub repository whose latest release is offered). Not set = no updater.
+val updateRepo = (findProperty("updateRepo") as String?)?.trim().orEmpty()
+
 android {
     namespace = "net.wi7.quartettmediathek.tv"
     compileSdk = 36
@@ -23,6 +26,7 @@ android {
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
+        buildConfigField("String", "UPDATE_REPO", "\"$updateRepo\"")
     }
 
     // Signing data comes from environment variables (GitHub Actions secrets), never from the repository.
@@ -56,7 +60,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     testOptions {
         unitTests.isReturnDefaultValues = true
         // Screenshot tests (Roborazzi + Robolectric) need the merged resources.
