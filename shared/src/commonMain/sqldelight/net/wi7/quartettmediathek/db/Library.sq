@@ -77,6 +77,22 @@ INSERT OR REPLACE INTO http_cache(cache_key, body, fetched_at_epoch_ms) VALUES (
 clearCache:
 DELETE FROM http_cache;
 
+-- Added by the library layer
+subscriptionById:
+SELECT * FROM subscription WHERE id = ?;
+
+bookmarkByKey:
+SELECT * FROM bookmark WHERE item_key = ?;
+
+watchedKeys:
+SELECT episode_key FROM playback_progress WHERE watched = 1;
+
+cacheFetchedAt:
+SELECT fetched_at_epoch_ms FROM http_cache WHERE cache_key = ?;
+
+deleteCacheKey:
+DELETE FROM http_cache WHERE cache_key = ?;
+
 -- Settings
 setting:
 SELECT value FROM setting WHERE name = ?;
