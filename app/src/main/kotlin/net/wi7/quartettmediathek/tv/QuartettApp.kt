@@ -12,6 +12,7 @@ class QuartettApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = DefaultAppContainer(this)
-        RefreshWorker.schedule(this)
+        // Never let background scheduling break the app start.
+        runCatching { RefreshWorker.schedule(this) }
     }
 }
