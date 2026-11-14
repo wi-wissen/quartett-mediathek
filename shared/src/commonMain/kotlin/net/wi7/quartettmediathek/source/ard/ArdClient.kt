@@ -93,6 +93,15 @@ class ArdClient(
         return ArdGrouping(show, episodes)
     }
 
+    /** 16:9 picture of an item page (`widgets[].image.src`), or null. */
+    suspend fun itemImage(itemId: String): String? {
+        val root = parseJson(http.fetchText("$baseUrl/pages/ard/item/$itemId?devicetype=pc&embedded=true"), "ARD item")
+        return parseItemImage(root)
+    }
+
+    internal fun parseItemImage(root: JsonElement): String? =
+        root["widgets"].list.firstNotNullOfOrNull { it["image"]["src"].nonBlank }?.let { image(it) }
+
     override suspend fun resolve(ref: EpisodeRef): StreamInfo {
         val root = parseJson(http.fetchText("$baseUrl/pages/ard/item/${ref.key}?devicetype=pc&embedded=true"), "ARD item")
         val player = root["widgets"].list.firstOrNull { it["mediaCollection"] != null }

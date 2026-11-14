@@ -34,7 +34,8 @@ class QuartettGraph(
     private val ard = ArdClient(http)
     private val zdf = ZdfClient(http)
     private val arte = ArteClient(http)
-    private val mvw = MvwFeedProvider(MvwClient(http), cache, index)
+    private val images = EpisodeImageResolver(http, ard, zdf, arte, cache)
+    private val mvw = MvwFeedProvider(MvwClient(http), cache, index, images)
 
     val library: LibraryRepository = SqlLibraryRepository(db, feedCandidates = { mvw.candidates(it) })
 
@@ -43,6 +44,7 @@ class QuartettGraph(
         zdf = zdf,
         arte = arte,
         mvw = mvw,
+        images = images,
         cache = cache,
         index = index,
         scope = scope,

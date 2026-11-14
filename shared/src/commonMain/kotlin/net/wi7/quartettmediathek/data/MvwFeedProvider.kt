@@ -16,6 +16,7 @@ import net.wi7.quartettmediathek.source.mvw.MvwField
 import net.wi7.quartettmediathek.source.mvw.MvwQuery
 import net.wi7.quartettmediathek.source.mvw.toEpisode
 import net.wi7.quartettmediathek.subscription.Subscription
+import net.wi7.quartettmediathek.subscription.SubscriptionFilter
 
 /**
  * Feeds subscriptions from MediathekViewWeb: one query per topic, minimum duration applied server-side,
@@ -26,7 +27,9 @@ class MvwFeedProvider(
     private val mvw: MvwClient,
     private val cache: CacheStore,
     private val index: ContentIndex,
+    private val images: EpisodeImageResolver? = null,
     private val pageSize: Int = 100,
+    private val imageLimit: Int = 40,
 ) {
     @Volatile
     private var forceNext = false
@@ -43,7 +46,22 @@ class MvwFeedProvider(
         }.awaitAll().flatten()
         if (force) forceNext = false
         index.rememberMvw(entries)
-        entries.mapNotNull { e -> e.toEpisode()?.let { FeedCandidate(it, e.urlVideo, e.size) } }
+        withImages(subscription, entries.mapNotNull { e -> e.toEpisode()?.let { FeedCandidate(it, e.urlVideo, e.size) } })
+    }
+
+    /**
+     * Thumbnails for the newest [imageLimit] candidates that pass the subscription's filter (what the feed will
+     * show); the rest stays without image. Lookups are cached, so later feed loads are instant.
+     */
+    private suspend fun withImages(subscription: Subscription, candidates: List<FeedCandidate>): List<FeedCandidate> {
+        val resolver = images ?: return candidates
+        val wanted = SubscriptionFilter.filter(subscription, candidates)
+            .sortedByDescending { it.episode.publishedAt }
+            .map { it.episode }
+            .take(imageLimit)
+        val found = resolver.imagesFor(wanted)
+        if (found.isEmpty()) return candidates
+        return candidates.map { c -> found[c.episode.ref]?.let { c.copy(episode = c.episode.copy(imageUrl = it)) } ?: c }
     }
 
     suspend fun query(query: MvwQuery, cacheKey: String, force: Boolean = false): List<MvwEntry> {

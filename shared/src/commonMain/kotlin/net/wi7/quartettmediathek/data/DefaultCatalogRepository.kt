@@ -59,6 +59,7 @@ class DefaultCatalogRepository(
     private val zdf: ZdfClient,
     private val arte: ArteClient,
     private val mvw: MvwFeedProvider,
+    private val images: EpisodeImageResolver?,
     private val cache: CacheStore,
     private val index: ContentIndex,
     private val scope: CoroutineScope,
@@ -171,13 +172,23 @@ class DefaultCatalogRepository(
     }
 
     override suspend fun episode(ref: EpisodeRef): Episode {
-        index.episode(ref)?.let { return it }
-        snapshotLookup(ref)?.let { return it }
+        index.episode(ref)?.let { return withImage(it) }
+        snapshotLookup(ref)?.let { return withImage(it) }
         return when (ref.source) {
             SourceId.ARTE -> arte.episode(ref).also { index.rememberEpisodes(listOf(it)) }
             else -> throw SourceException("Episode ${ref.source}:${ref.key} is not known")
         }
     }
+
+    /** Episodes from older snapshots or beyond the list limit may lack a thumbnail: look it up (cached). */
+    private suspend fun withImage(episode: Episode): Episode {
+        if (episode.imageUrl != null || episode.ref.source != SourceId.MVW || images == null) return episode
+        val url = images.imageFor(episode.ref.key, episode.websiteUrl) ?: return episode
+        return episode.copy(imageUrl = url).also { index.rememberEpisodes(listOf(it)) }
+    }
+
+    private suspend fun withImages(episodes: List<Episode>): List<Episode> =
+        images?.fill(episodes, IMAGE_LIMIT) ?: episodes
 
     /** Episodes of a MediathekViewWeb topic: exact topic match, duplicates and variants merged, newest first. */
     private suspend fun mvwEpisodes(topic: String, broadcaster: Broadcaster?): List<Episode> {
@@ -185,7 +196,7 @@ class DefaultCatalogRepository(
         val wanted = normalizeText(topic)
         val entries = mvw.query(query, "mvw:topic:${topic.lowercase()}")
             .filter { normalizeText(it.topic) == wanted }
-        return merged(entries).filter { broadcaster == null || it.broadcaster == broadcaster }
+        return withImages(merged(entries).filter { broadcaster == null || it.broadcaster == broadcaster })
     }
 
     private fun mvwShow(ref: ShowRef, episodes: List<Episode>): Show {
@@ -196,7 +207,7 @@ class DefaultCatalogRepository(
             broadcaster = first.broadcaster,
             channelLabel = first.channelLabel,
             description = first.description,
-            imageUrl = first.imageUrl,
+            imageUrl = episodes.firstNotNullOfOrNull { it.imageUrl },
             episodeCount = episodes.size,
         )
     }
@@ -215,11 +226,13 @@ class DefaultCatalogRepository(
             durationMinSeconds = 15 * 60,
         )
         val episodes = merged(mvw.query(query, "mvw:channel:3sat", force = true))
-        val shows = episodes.groupBy { normalizeText(it.showTitle) }.values
+        val groups = episodes.groupBy { normalizeText(it.showTitle) }.values
             .sortedByDescending { group -> group.maxOf { it.publishedAt } }
             .take(24)
+        val found = images?.imagesFor(groups.map { it.first() }).orEmpty()
+        val shows = groups
             .map { group ->
-                val e = group.first()
+                val e = group.first().let { it.copy(imageUrl = found[it.ref] ?: it.imageUrl) }
                 Teaser.OfShow(
                     Show(
                         ref = ShowRef(SourceId.MVW, e.showTitle),
@@ -245,12 +258,14 @@ class DefaultCatalogRepository(
         val entries = coroutineScope {
             queries.map { q -> async { mvw.query(q, "mvw:search:${q.toJson().hashCode()}") } }.awaitAll()
         }.flatten().distinctBy { it.id }
-        val episodes = merged(entries)
-        val shows = episodes.groupBy { normalizeText(it.showTitle) }.values
-            .sortedByDescending { it.size }
-            .take(12)
+        val allEpisodes = merged(entries)
+        val groups = allEpisodes.groupBy { normalizeText(it.showTitle) }.values.sortedByDescending { it.size }.take(12)
+        val shownEpisodes = allEpisodes.take(36)
+        val found = images?.imagesFor(groups.map { it.first() } + shownEpisodes).orEmpty()
+        val episodes = shownEpisodes.withImages(found)
+        val shows = groups
             .map { group ->
-                val e = group.first()
+                val e = group.first().let { it.copy(imageUrl = found[it.ref] ?: it.imageUrl) }
                 Teaser.OfShow(
                     Show(
                         ref = ShowRef(SourceId.MVW, e.showTitle),
@@ -258,16 +273,18 @@ class DefaultCatalogRepository(
                         broadcaster = group.groupingBy { it.broadcaster }.eachCount().maxBy { it.value }.key,
                         channelLabel = e.channelLabel,
                         description = e.description,
+                        imageUrl = e.imageUrl,
                         episodeCount = group.size,
                     ),
                 )
             }
-        val teasers = shows + episodes.take(36).map { Teaser.OfEpisode(it) }
+        val teasers = shows + episodes.map { Teaser.OfEpisode(it) }
         index.remember(teasers)
         return teasers
     }
 
     private companion object {
+        const val IMAGE_LIMIT = 40
         val SELECTOR_CHARS = setOf('!', '#', '+', '*', '>', '<')
         val BROADCASTER_ORDER = listOf(Broadcaster.ARD, Broadcaster.ZDF, Broadcaster.ARTE, Broadcaster.THREESAT)
     }

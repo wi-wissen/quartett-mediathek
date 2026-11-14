@@ -157,6 +157,12 @@ class ZdfClient(
         return show to sorted
     }
 
+    /** Teaser picture (768x432) of a video by its canonical, or null when it has none. */
+    suspend fun videoImage(canonical: String): String? {
+        val video = graphQl(ZdfQueries.VIDEO_IMAGE, mapOf("c" to JsonPrimitive(canonical)))["videoByCanonical"]
+        return image(video["teaser"])
+    }
+
     override suspend fun resolve(ref: EpisodeRef): StreamInfo {
         val video = graphQl(ZdfQueries.VIDEO_BY_CANONICAL, mapOf("c" to JsonPrimitive(ref.key)))["videoByCanonical"]
         val template = video["currentMedia"]["nodes"].list.firstNotNullOfOrNull { it["ptmdTemplate"].nonBlank }

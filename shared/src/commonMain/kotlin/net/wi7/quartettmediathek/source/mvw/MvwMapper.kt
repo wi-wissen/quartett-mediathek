@@ -16,11 +16,14 @@ import net.wi7.quartettmediathek.model.Variant
  * Null for entries that do not point to the ARD Mediathek.
  */
 val MvwEntry.ardItemId: String?
-    get() {
-        val url = urlWebsite ?: return null
-        if (!url.substringAfter("://").substringBefore('/').endsWith("ardmediathek.de")) return null
-        return url.substringBefore('#').substringBefore('?').trimEnd('/').substringAfterLast('/').takeIf { it.isNotEmpty() }
-    }
+    get() = ardItemIdOf(urlWebsite)
+
+/** ARD item id of an `ardmediathek.de` page URL, or null for other hosts. */
+fun ardItemIdOf(url: String?): String? {
+    if (url == null) return null
+    if (!url.substringAfter("://").substringBefore('/').endsWith("ardmediathek.de")) return null
+    return url.substringBefore('#').substringBefore('?').trimEnd('/').substringAfterLast('/').takeIf { it.isNotEmpty() }
+}
 
 /** Maps a hit to an [Episode], or null if the channel is out of scope (SRF, ORF, KiKA, ...). */
 fun MvwEntry.toEpisode(): Episode? {
