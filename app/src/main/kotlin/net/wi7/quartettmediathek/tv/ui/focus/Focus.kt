@@ -175,7 +175,11 @@ fun InitialFocusEffect(sf: ScreenFocus, listState: LazyListState?) {
     androidx.compose.runtime.LaunchedEffect(sf.resolved) {
         if (!sf.resolved) return@LaunchedEffect
         try {
-            listState?.scrollToItem(sf.targetRow)
+            // Only scroll when the target row is not composed yet; needlessly scrolling would hide the header.
+            if (listState != null) {
+                androidx.compose.runtime.withFrameNanos { }
+                if (listState.layoutInfo.visibleItemsInfo.none { it.index == sf.targetRow }) listState.scrollToItem(sf.targetRow)
+            }
             repeat(4) {
                 androidx.compose.runtime.withFrameNanos { }
                 if (runCatching { sf.entry.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
@@ -190,7 +194,9 @@ fun InitialFocusEffect(sf: ScreenFocus, listState: LazyListState?) {
 @Composable
 fun Modifier.snapRowOnFocus(listState: LazyListState, rowIndex: Int): Modifier {
     val scope = rememberCoroutineScope()
-    return this.onFocusChanged { if (it.hasFocus) scope.launch { listState.animateScrollToItem(rowIndex) } }
+    // Row 0 sits at the content padding (header visible); later rows go to a small top margin (header hidden).
+    val inset = if (rowIndex == 0) 0 else net.wi7.quartettmediathek.tv.ui.components.LocalRowSnapInset.current
+    return this.onFocusChanged { if (it.hasFocus) scope.launch { listState.animateScrollToItem(rowIndex, inset) } }
 }
 
 /** Bring-into-view behaviour: keeps the focused item at least [lead] from the start and [trail] from the end. */

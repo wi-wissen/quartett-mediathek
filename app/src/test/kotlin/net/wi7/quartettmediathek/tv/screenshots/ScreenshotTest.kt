@@ -5,7 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -16,10 +21,12 @@ import net.wi7.quartettmediathek.repository.StartScreen
 import net.wi7.quartettmediathek.tv.data.fake.FakeData
 import net.wi7.quartettmediathek.tv.navigation.RailWidth
 import net.wi7.quartettmediathek.tv.navigation.Routes
-import net.wi7.quartettmediathek.tv.navigation.TopFade
+import net.wi7.quartettmediathek.tv.navigation.ShellHeader
+import net.wi7.quartettmediathek.tv.ui.components.HeaderState
+import net.wi7.quartettmediathek.tv.ui.components.LocalHeaderState
+import net.wi7.quartettmediathek.tv.ui.components.SnapTopMargin
 import net.wi7.quartettmediathek.tv.ui.LibraryOverlay
 import net.wi7.quartettmediathek.tv.ui.LocalFixedNow
-import net.wi7.quartettmediathek.tv.ui.screens.AppHeader
 import net.wi7.quartettmediathek.tv.ui.screens.AppRail
 import net.wi7.quartettmediathek.tv.ui.screens.AvatarState
 import net.wi7.quartettmediathek.tv.ui.screens.DiscoverContent
@@ -64,10 +71,10 @@ abstract class ScreenshotTest(private val locale: String) {
         captureRoboImage("src/test/screenshots/${locale}_$name.png") {
             CompositionLocalProvider(LocalFixedNow provides FakeData.now) {
                 QuartettTheme {
+                    CompositionLocalProvider(LocalHeaderState provides remember { HeaderState() }) {
                     Box(Modifier.fillMaxSize().background(QColors.Background)) {
                         Box(Modifier.fillMaxSize().padding(start = RailWidth)) { content() }
-                        TopFade()
-                        AppHeader(
+                        ShellHeader(
                             ShellUiState(updated = FakeData.now - 13.hours),
                             onRefresh = {},
                             modifier = Modifier.align(Alignment.TopEnd),
@@ -79,6 +86,7 @@ abstract class ScreenshotTest(private val locale: String) {
                             onNavigate = {},
                             onFocusChange = {},
                         )
+                    }
                     }
                 }
             }
@@ -144,6 +152,26 @@ class GermanScreenshots : ScreenshotTest("de") {
                 moreFromBroadcaster = FakeData.shows.filter { it.broadcaster.name == "ARD" }.map { overlay.decorate(it) },
             ),
             "screenshot", {}, {}, {},
+        )
+    }
+
+    /** Show page scrolled to the episode row: header and fade are hidden, the row title sits at the top margin. */
+    @Test
+    fun showScrolled() = snap("show_scrolled", Routes.HOME) {
+        val eps = FakeData.episodesByShow.getValue("hafenrevier")
+        val listState = rememberLazyListState()
+        val inset = with(LocalDensity.current) { -SnapTopMargin.roundToPx() }
+        LaunchedEffect(Unit) {
+            repeat(10) { withFrameNanos { } } // let the initial focus effect settle first
+            listState.scrollToItem(1, inset)
+        }
+        ShowContent(
+            ShowUiState(
+                loaded = true, show = FakeData.show("hafenrevier"), episodes = eps.map { overlay.decorate(it) },
+                subscription = null, resumeEpisode = eps.first(),
+                moreFromBroadcaster = FakeData.shows.filter { it.broadcaster.name == "ARD" }.map { overlay.decorate(it) },
+            ),
+            "screenshot", {}, {}, {}, listState,
         )
     }
 

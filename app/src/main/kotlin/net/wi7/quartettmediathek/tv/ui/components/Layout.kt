@@ -19,6 +19,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -27,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import net.wi7.quartettmediathek.tv.ui.focus.NoBringIntoViewSpec
 import net.wi7.quartettmediathek.tv.ui.focus.ScreenFocus
+import net.wi7.quartettmediathek.tv.ui.focus.MarginBringIntoViewSpec
 import net.wi7.quartettmediathek.tv.ui.focus.rememberMarginSpec
 import net.wi7.quartettmediathek.tv.ui.focus.snapRowOnFocus
 import net.wi7.quartettmediathek.tv.ui.focus.tracked
@@ -34,8 +45,66 @@ import net.wi7.quartettmediathek.tv.ui.theme.QColors
 import net.wi7.quartettmediathek.tv.ui.theme.QType
 import net.wi7.quartettmediathek.tv.ui.theme.QuartettTheme
 
-/** Height reserved for the fixed header at the top of every screen. */
+/** Height reserved for the header at the top of a screen that is scrolled to the top. */
 val HeaderHeight = 60.dp
+
+/** Distance between the top edge and a row that was snapped to the top while the header is hidden. */
+val SnapTopMargin = 22.dp
+
+/** Scroll offset up to which the screen still counts as "at the top" (header visible). */
+private val AtTopTolerance = 8.dp
+
+/**
+ * Shell-level state: whether the header (and the top fade) is shown. Screens report their scroll position through
+ * [ScreenColumn]; the header is visible only while the screen is scrolled to the top.
+ */
+@Stable
+class HeaderState {
+    var visible by mutableStateOf(true)
+}
+
+val LocalHeaderState = staticCompositionLocalOf { HeaderState() }
+
+/** Extra scroll (px, may be negative) applied when snapping a row (index > 0) to the top; set by [ScreenColumn]. */
+val LocalRowSnapInset = compositionLocalOf { 0 }
+
+/** Pure rule: header visible only at the very top of the list. */
+internal fun isAtTop(firstVisibleIndex: Int, firstVisibleOffset: Int, tolerancePx: Int): Boolean =
+    firstVisibleIndex == 0 && firstVisibleOffset <= tolerancePx
+
+/** Reports [state] to the shell's [HeaderState] and shows the header again when the screen leaves. */
+@Composable
+private fun ReportHeaderVisibility(state: LazyListState) {
+    val header = LocalHeaderState.current
+    val tolerance = with(LocalDensity.current) { AtTopTolerance.roundToPx() }
+    LaunchedEffect(state, header) {
+        snapshotFlow { isAtTop(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset, tolerance) }
+            .collect { header.visible = it }
+    }
+    DisposableEffect(header) { onDispose { header.visible = true } }
+}
+
+/**
+ * Like [MarginBringIntoViewSpec], but while the list is close to its top (within the header zone) it scrolls fully
+ * to the top so the header can come back instead of stopping a few dp short.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private class GridBringIntoViewSpec(
+    private val state: LazyListState,
+    lead: Float,
+    trail: Float,
+    private val topPadding: Float,
+) : BringIntoViewSpec {
+    private val margin = MarginBringIntoViewSpec(lead, trail)
+    override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float {
+        val d = margin.calculateScrollDistance(offset, size, containerSize)
+        if (d < 0f && state.firstVisibleItemIndex == 0) {
+            val scrolled = state.firstVisibleItemScrollOffset.toFloat()
+            if (scrolled + d <= topPadding) return -scrolled
+        }
+        return d
+    }
+}
 
 /**
  * Vertical column of rows, one lazy item per row (the index equals the row index in [ScreenFocus]).
@@ -51,8 +120,13 @@ fun ScreenColumn(
     snapRows: Boolean = true,
     content: LazyListScope.() -> Unit,
 ) {
-    val spec: BringIntoViewSpec = if (snapRows) NoBringIntoViewSpec else rememberMarginSpec(HeaderHeight + 16.dp, 40.dp, LocalDensity.current)
-    CompositionLocalProvider(LocalBringIntoViewSpec provides spec) {
+    val density = LocalDensity.current
+    val spec: BringIntoViewSpec = if (snapRows) NoBringIntoViewSpec else remember(state, density, topPadding) {
+        GridBringIntoViewSpec(state, with(density) { SnapTopMargin.toPx() }, with(density) { 40.dp.toPx() }, with(density) { topPadding.toPx() })
+    }
+    val snapInset = with(density) { (topPadding - SnapTopMargin).roundToPx() }
+    ReportHeaderVisibility(state)
+    CompositionLocalProvider(LocalBringIntoViewSpec provides spec, LocalRowSnapInset provides snapInset) {
         LazyColumn(
             state = state,
             modifier = modifier.fillMaxSize(),

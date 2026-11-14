@@ -1,7 +1,13 @@
 package net.wi7.quartettmediathek.tv.navigation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -33,6 +39,8 @@ import androidx.navigation.navArgument
 import net.wi7.quartettmediathek.tv.di.LocalAppContainer
 import net.wi7.quartettmediathek.tv.di.ViewModelFactory
 import net.wi7.quartettmediathek.tv.player.PlayerScreen
+import net.wi7.quartettmediathek.tv.ui.components.HeaderState
+import net.wi7.quartettmediathek.tv.ui.components.LocalHeaderState
 import net.wi7.quartettmediathek.tv.ui.components.LocalTileActions
 import net.wi7.quartettmediathek.tv.ui.components.TileActions
 import net.wi7.quartettmediathek.tv.ui.focus.FocusMemory
@@ -41,6 +49,7 @@ import net.wi7.quartettmediathek.tv.ui.focus.LocalFocusMemory
 import net.wi7.quartettmediathek.tv.ui.menu.TileMenuDialog
 import net.wi7.quartettmediathek.tv.ui.menu.TileMenuViewModel
 import net.wi7.quartettmediathek.tv.ui.screens.AppHeader
+import net.wi7.quartettmediathek.tv.ui.screens.ShellUiState
 import net.wi7.quartettmediathek.tv.ui.screens.AppRail
 import net.wi7.quartettmediathek.tv.ui.screens.DiscoverScreen
 import net.wi7.quartettmediathek.tv.ui.screens.EpisodeScreen
@@ -69,6 +78,7 @@ fun AppShell(startRoute: String) {
     val shell by shellVm.state.collectAsStateWithLifecycle()
     val menu by menuVm.state.collectAsStateWithLifecycle()
 
+    val headerState = remember { HeaderState() }
     val focusMemory = remember { FocusMemory() }
     val contentEntry = remember { FocusRequester() }
     val railRequesters = remember { Routes.topLevel.associateWith { FocusRequester() } }
@@ -101,6 +111,7 @@ fun AppShell(startRoute: String) {
         LocalFocusMemory provides focusMemory,
         LocalContentEntry provides contentEntry,
         LocalTileActions provides actions,
+        LocalHeaderState provides headerState,
     ) {
         Box(Modifier.fillMaxSize().background(QColors.Background)) {
             NavHost(
@@ -134,8 +145,7 @@ fun AppShell(startRoute: String) {
                 }
             }
             if (!isPlayer) {
-                TopFade()
-                AppHeader(shell, onRefresh = shellVm::refresh, modifier = Modifier.align(Alignment.TopEnd))
+                ShellHeader(shell, onRefresh = shellVm::refresh, modifier = Modifier.align(Alignment.TopEnd))
                 AppRail(
                     activeRoute = lastTopLevel,
                     requesters = railRequesters,
@@ -169,6 +179,30 @@ fun AppShell(startRoute: String) {
 }
 
 private fun NavBackStackEntry.arg(name: String): String? = arguments?.getString(name)
+
+/**
+ * Top fade and header, faded/slid in and out depending on [LocalHeaderState]. A hidden header leaves composition,
+ * so the refresh button cannot take focus then.
+ */
+@Composable
+internal fun ShellHeader(
+    state: ShellUiState,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    visible: Boolean = LocalHeaderState.current.visible,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier.fillMaxWidth(),
+        enter = fadeIn(tween(160)) + slideInVertically(tween(160)) { -it / 2 },
+        exit = fadeOut(tween(160)) + slideOutVertically(tween(160)) { -it / 2 },
+    ) {
+        Box(Modifier.fillMaxWidth()) {
+            TopFade()
+            AppHeader(state, onRefresh = onRefresh, modifier = Modifier.align(Alignment.TopEnd))
+        }
+    }
+}
 
 @Composable
 internal fun TopFade() {
