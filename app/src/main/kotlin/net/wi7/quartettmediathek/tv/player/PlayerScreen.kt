@@ -2,6 +2,8 @@
 
 package net.wi7.quartettmediathek.tv.player
 
+import net.wi7.quartettmediathek.tv.ui.menu.MenuRow
+import net.wi7.quartettmediathek.tv.ui.menu.QDialog
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.ViewGroup
@@ -313,6 +315,31 @@ private fun PlayerContent(
     val separator = remember { java.text.DecimalFormatSymbols.getInstance(Locale.getDefault()).decimalSeparator }
     val speedLabel = PlayerLogic.formatSpeed(speed, separator)
     val versionLabel = stringResource(versionLabelRes(session.variant))
+    var versionChooser by remember { mutableStateOf(false) }
+    if (versionChooser) {
+        // Chooser instead of cycling: all versions at once, the playing one checked and focused.
+        val currentFocus = remember { FocusRequester() }
+        QDialog(
+            title = stringResource(R.string.player_version_button),
+            subtitle = null,
+            onDismiss = { versionChooser = false },
+            initialFocus = currentFocus,
+        ) {
+            session.versions.forEach { option ->
+                val current = option.variant == session.variant
+                MenuRow(
+                    title = stringResource(versionLabelRes(option.variant)),
+                    icon = if (current) R.drawable.ic_check else null,
+                    modifier = if (current) Modifier.focusRequester(currentFocus) else Modifier,
+                    onClick = {
+                        versionChooser = false
+                        if (!current) vm.switchVersion(option, player.currentPosition)
+                        touch()
+                    },
+                )
+            }
+        }
+    }
     val model = OsdModel(
         showTitle = episode.showTitle,
         channel = episode.channelLabel,
@@ -342,12 +369,7 @@ private fun PlayerContent(
     val actions = OsdActions(
         onPlayPause = { togglePlay() },
         onSpeed = { onSpeed(PlayerLogic.nextSpeed(speed)); touch() },
-        onVersion = {
-            PlayerLogic.nextVersion(session.versions, session.variant)?.let {
-                vm.switchVersion(it, player.currentPosition)
-            }
-            touch()
-        },
+        onVersion = { versionChooser = true; touch() },
         onSubtitles = { onSubtitles(!subtitlesOn); touch() },
         onBookmark = { vm.toggleBookmark(); touch() },
         onNext = {

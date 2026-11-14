@@ -107,10 +107,4 @@ object PlayerLogic {
         versionRefs.entries.firstOrNull { it.value == playedRef }?.key
             ?: if (requested == Variant.AUDIO_DESCRIPTION && "ad" in stream.audioTracks) Variant.AUDIO_DESCRIPTION else Variant.STANDARD
 
-    /** The option after [current] in [options] (wrapping); the first one if [current] is not among them. */
-    fun nextVersion(options: List<VersionOption>, current: Variant): VersionOption? {
-        if (options.isEmpty()) return null
-        val i = options.indexOfFirst { it.variant == current }
-        return options[(i + 1) % options.size]
-    }
 }

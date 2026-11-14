@@ -121,11 +121,4 @@ class PlayerLogicTest {
         assertEquals(Variant.AUDIO_DESCRIPTION, PlayerLogic.activeVersion(emptyMap(), mvw("z"), Variant.AUDIO_DESCRIPTION, stream("main", "ad")))
         assertEquals(Variant.STANDARD, PlayerLogic.activeVersion(emptyMap(), mvw("z"), Variant.AUDIO_DESCRIPTION, stream("main")))
     }
-
-    @Test fun nextVersionCycles() {
-        val options = PlayerLogic.versionOptions(files, mvw("de"), stream())
-        assertEquals(Variant.ORIGINAL_VERSION, PlayerLogic.nextVersion(options, Variant.STANDARD)?.variant)
-        assertEquals(Variant.STANDARD, PlayerLogic.nextVersion(options, Variant.AUDIO_DESCRIPTION)?.variant)
-        assertNull(PlayerLogic.nextVersion(emptyList(), Variant.STANDARD))
-    }
 }

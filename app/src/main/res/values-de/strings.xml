@@ -52,7 +52,7 @@
     <string name="player_step_seconds">%1$d s</string>
     <string name="player_version_button">Ton / Sprache</string>
     <string name="player_version_standard">Deutsch</string>
-    <string name="player_version_original">Englisch</string>
+    <string name="player_version_original">Originalfassung</string>
     <string name="player_version_ad">Deutsch mit Audiodeskription</string>
     <string name="player_version_dgs">Deutsch mit Gebärdensprache</string>
     <string name="player_version_failed">Tonfassung nicht verfügbar</string>

@@ -61,7 +61,7 @@ class PlayerVersionSwitchTest {
     fun switchingResolvesTheVersionsStreamAndKeepsThePosition() = runTest {
         val vm = vm()
         assertEquals(3, session(vm).versions.size)
-        val option = PlayerLogic.nextVersion(session(vm).versions, session(vm).variant)!!
+        val option = session(vm).versions.first { it.variant != session(vm).variant }
         vm.switchVersion(option, 754_000)
         val s = session(vm)
         assertEquals(Variant.ORIGINAL_VERSION, s.variant)
