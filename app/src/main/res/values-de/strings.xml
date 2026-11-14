@@ -34,4 +34,20 @@
     <string name="category_documentaries">Dokus und Reportagen</string>
     <string name="category_knowledge_culture">Wissen und Kultur</string>
     <string name="category_movies">Filme</string>
+
+    <!-- player -->
+    <string name="player_loading">Wird geladen …</string>
+    <string name="player_error_not_found">Diese Folge wurde nicht gefunden.</string>
+    <string name="player_error_stream">Das Video konnte nicht geladen werden. Möglicherweise ist es nicht mehr verfügbar.</string>
+    <string name="player_error_playback">Die Wiedergabe ist fehlgeschlagen. Bitte Verbindung prüfen und erneut versuchen.</string>
+    <string name="player_error_back">Mit Zurück den Player verlassen.</string>
+    <string name="player_subtitles">Untertitel</string>
+    <string name="player_subtitles_on">Untertitel an</string>
+    <string name="player_bookmark">Merken</string>
+    <string name="player_bookmarked">Gemerkt</string>
+    <string name="player_next">Nächste Folge</string>
+    <string name="player_episode_number">Folge %1$d</string>
+    <string name="player_available_until">verfügbar bis %1$s</string>
+    <string name="player_step_seconds">%1$d s</string>
+    <string name="player_step_minutes">%1$d Min.</string>
 </resources>

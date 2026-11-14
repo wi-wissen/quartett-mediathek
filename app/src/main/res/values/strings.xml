@@ -37,4 +37,20 @@
     <string name="category_documentaries">Documentaries</string>
     <string name="category_knowledge_culture">Knowledge and culture</string>
     <string name="category_movies">Movies</string>
+
+    <!-- player -->
+    <string name="player_loading">Loading …</string>
+    <string name="player_error_not_found">This episode could not be found.</string>
+    <string name="player_error_stream">The video could not be loaded. It may no longer be available.</string>
+    <string name="player_error_playback">Playback failed. Please check your connection and try again.</string>
+    <string name="player_error_back">Press Back to leave the player.</string>
+    <string name="player_subtitles">Subtitles</string>
+    <string name="player_subtitles_on">Subtitles on</string>
+    <string name="player_bookmark">Save</string>
+    <string name="player_bookmarked">Saved</string>
+    <string name="player_next">Next episode</string>
+    <string name="player_episode_number">Episode %1$d</string>
+    <string name="player_available_until">available until %1$s</string>
+    <string name="player_step_seconds">%1$d s</string>
+    <string name="player_step_minutes">%1$d min</string>
 </resources>
