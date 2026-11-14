@@ -2,6 +2,7 @@ package net.wi7.quartettmediathek.tv.data.fake
 
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import net.wi7.quartettmediathek.model.Broadcaster
 import net.wi7.quartettmediathek.model.DiscoverCategory
@@ -13,6 +14,7 @@ import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.model.SourceId
 import net.wi7.quartettmediathek.model.Teaser
 import net.wi7.quartettmediathek.model.Variant
+import net.wi7.quartettmediathek.repository.Progress
 
 /** Invented sample content mirroring docs/mockup.html. No images: tiles draw a placeholder gradient. */
 object FakeData {
@@ -130,6 +132,22 @@ object FakeData {
     val initialBookmarks: List<Teaser> = listOf(e("fernweh-5"), s("alpenlicht"), e("zweiufer-1"), e("sternwarte-4"), s("grenzland"))
 
     /** Episode key to position in seconds. */
-    val initialProgress: Map<String, Long> = mapOf("abgruende-3" to 2210L, "tiefsee-4" to 860L, "nachtzug-3" to 1530L)
-    val initialWatched: Set<String> = setOf("hafenrevier-3", "moorbauern-3")
+    val initialProgress: Map<String, Long> = mapOf(
+        "abgruende-3" to 2210L, "tiefsee-4" to 860L, "nachtzug-3" to 1530L, "hafenrevier-4" to 900L, "sternwarte-4" to 700L,
+    )
+    val initialWatched: Set<String> = setOf("hafenrevier-3", "moorbauern-3", "nachtzug-4", "kueche-4", "grenzland-5")
+
+    /** Played episodes as the library would store them: started ones minutes ago, watched ones days ago. */
+    fun sampleProgress(): List<Progress> {
+        val started = initialProgress.entries.mapIndexed { i, (key, pos) ->
+            // "abgruende-3" is the most recently played one.
+            val at = now - (if (key == "abgruende-3") 20 else 600 + i * 60).minutes
+            Progress(episode(key), pos, false, at)
+        }
+        val watched = initialWatched.mapIndexed { i, key ->
+            val e = episode(key)
+            Progress(e, e.durationSeconds.toLong(), true, now - (3 + i * 2).days)
+        }
+        return started + watched
+    }
 }

@@ -40,6 +40,9 @@ typealias FeedCandidateProvider = suspend (Subscription) -> List<FeedCandidate>
 /** Percentage of the duration from which an episode counts as watched. */
 const val WATCHED_THRESHOLD_PERCENT = 95
 
+/** Maximum number of entries of [LibraryRepository.history]. */
+const val HISTORY_LIMIT = 200
+
 /** `LibraryRepository` on top of the SQLDelight database. */
 class SqlLibraryRepository(
     private val db: QuartettDatabase,
@@ -132,6 +135,21 @@ class SqlLibraryRepository(
             }
         }
 
+    override fun history(): Flow<List<Progress>> =
+        q.historyRows(HISTORY_LIMIT.toLong()).asFlow().mapToList(dispatcher).map { rows -> rows.mapNotNull { toProgress(it) } }
+
+    override fun allProgress(): Flow<List<Progress>> =
+        q.allProgressRows().asFlow().mapToList(dispatcher).map { rows -> rows.mapNotNull { toProgress(it) } }
+
+    private fun toProgress(r: net.wi7.quartettmediathek.db.Playback_progress): Progress? =
+        decodeEpisode(r.snapshot_json)?.let {
+            Progress(it, r.position_seconds, r.watched != 0L, Instant.fromEpochMilliseconds(r.updated_at_epoch_ms))
+        }
+
+    override suspend fun removeFromHistory(ref: EpisodeRef) {
+        q.deleteProgress(LibraryKeys.episode(ref))
+    }
+
     override fun progress(ref: EpisodeRef): Flow<Progress?> =
         q.progressFor(LibraryKeys.episode(ref)).asFlow().mapToOneOrNull(dispatcher).map { r ->
             r?.let { row ->
@@ -143,8 +161,10 @@ class SqlLibraryRepository(
 
     override suspend fun saveProgress(episode: Episode, positionSeconds: Long) {
         val duration = episode.durationSeconds.toLong()
-        val watched = duration > 0 && positionSeconds * 100 >= duration * WATCHED_THRESHOLD_PERCENT
-        write(episode, positionSeconds, watched)
+        val reached = duration > 0 && positionSeconds * 100 >= duration * WATCHED_THRESHOLD_PERCENT
+        // Watching an episode again must not take away its "watched" mark (like YouTube).
+        val wasWatched = q.progressFor(LibraryKeys.episode(episode.ref)).executeAsOneOrNull()?.watched == 1L
+        write(episode, positionSeconds, reached || wasWatched)
     }
 
     override suspend fun setWatched(episode: Episode, watched: Boolean) {

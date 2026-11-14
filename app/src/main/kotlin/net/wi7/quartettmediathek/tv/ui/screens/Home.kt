@@ -217,7 +217,7 @@ private fun HomePreview() {
 }
 
 internal fun previewHomeState(): HomeUiState {
-    val overlay = LibraryOverlay()
+    val overlay = LibraryOverlay(progress = net.wi7.quartettmediathek.library.ProgressIndex(net.wi7.quartettmediathek.tv.data.fake.FakeData.sampleProgress()))
     val data = net.wi7.quartettmediathek.tv.data.fake.FakeData
     val ep = data.episode("abgruende-3")
     return HomeUiState(

@@ -58,11 +58,13 @@ fun UpdatedLabel.label(): String = when (this) {
 
 /** "Episode 5 · yesterday" or "Episode 5 · 12 min left": the part of the meta line that is never truncated. */
 @Composable
-fun episodeMetaSuffix(episode: Episode, progressSeconds: Long?, now: Instant): String {
+fun episodeMetaSuffix(episode: Episode, progressSeconds: Long?, now: Instant, playedAt: Instant? = null): String {
     val parts = buildList {
         episode.episodeNumber?.let { add(stringResource(R.string.episode_number, it)) }
         if (progressSeconds != null) add(stringResource(R.string.minutes_left, minutesLeft(episode.durationSeconds, progressSeconds)))
-        else add(ageOf(episode.publishedAt, now).label())
+        // History tiles show when the episode was played, everywhere else when it was published.
+        if (playedAt != null) add(ageOf(playedAt, now).label())
+        else if (progressSeconds == null) add(ageOf(episode.publishedAt, now).label())
     }
     return parts.joinToString(" · ")
 }

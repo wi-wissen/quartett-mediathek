@@ -5,6 +5,7 @@
     <string name="nav_search">Suche</string>
     <string name="nav_subscriptions">Abos</string>
     <string name="nav_bookmarks">Merkliste</string>
+    <string name="nav_history">Verlauf</string>
     <string name="nav_settings">Einstellungen</string>
 
     <string name="refresh_state">Stand: %1$s</string>
@@ -92,6 +93,8 @@
     <string name="subscriptions_newest_first">neueste zuerst</string>
     <string name="subscriptions_empty">Du hast noch keine Abos. Öffne eine Sendung und wähle Abonnieren oder halte OK auf einer Kachel gedrückt.</string>
     <string name="watchlist_count">%1$d Einträge aus allen Mediatheken</string>
+    <string name="history_count">%1$d Folgen, die du zuletzt gesehen hast</string>
+    <string name="history_empty">Noch nichts angesehen. Folgen, die du abspielst, erscheinen hier.</string>
     <string name="watchlist_empty">Noch nichts gemerkt. Halte OK auf einer Kachel gedrückt und wähle Merken.</string>
 
     <string name="key_space">Leerzeichen</string>
@@ -107,6 +110,7 @@
     <string name="menu_bookmark_show">Sendung merken</string>
     <string name="menu_bookmark_episode">Folge merken</string>
     <string name="menu_remove_bookmark">Von der Merkliste entfernen</string>
+    <string name="menu_remove_history">Aus Verlauf entfernen</string>
     <string name="menu_mark_watched">Als gesehen markieren</string>
     <string name="menu_mark_unwatched">Als ungesehen markieren</string>
 

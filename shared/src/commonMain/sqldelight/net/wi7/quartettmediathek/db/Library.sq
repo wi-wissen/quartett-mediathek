@@ -63,6 +63,15 @@ SELECT * FROM playback_progress WHERE episode_key = ?;
 continueWatching:
 SELECT * FROM playback_progress WHERE watched = 0 AND position_seconds > 0 ORDER BY updated_at_epoch_ms DESC LIMIT ?;
 
+historyRows:
+SELECT * FROM playback_progress WHERE watched = 1 OR position_seconds > 0 ORDER BY updated_at_epoch_ms DESC LIMIT ?;
+
+allProgressRows:
+SELECT * FROM playback_progress WHERE watched = 1 OR position_seconds > 0;
+
+deleteProgress:
+DELETE FROM playback_progress WHERE episode_key = ?;
+
 upsertProgress:
 INSERT OR REPLACE INTO playback_progress(episode_key, snapshot_json, position_seconds, duration_seconds, watched, updated_at_epoch_ms)
 VALUES (?, ?, ?, ?, ?, ?);

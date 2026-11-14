@@ -34,6 +34,8 @@ data class TileMenuState(
     val bookmarked: Boolean,
     /** Episodes only; null for shows. */
     val watched: Boolean?,
+    /** Episode has been played (in progress or watched), so it can be removed from the history. */
+    val inHistory: Boolean = false,
 )
 
 private fun Teaser.showRef(): ShowRef? = when (this) {
@@ -53,8 +55,11 @@ class TileMenuViewModel(private val catalog: CatalogRepository, private val libr
             val showRef = teaser.showRef()
             val subscribed = showRef?.let { r -> library.subscriptionFor(r).map { it != null } } ?: flowOf(false)
             val watched = (teaser as? Teaser.OfEpisode)?.let { t -> library.progress(t.episode.ref).map { it?.watched == true } } ?: flowOf(null)
-            combine(library.isBookmarked(teaser.key()), subscribed, watched) { bookmarked, sub, w ->
-                TileMenuState(teaser, showRef, sub, bookmarked, w)
+            val inHistory = (teaser as? Teaser.OfEpisode)?.let { t ->
+                library.progress(t.episode.ref).map { p -> p != null && (p.watched || p.positionSeconds > 0) }
+            } ?: flowOf(false)
+            combine(library.isBookmarked(teaser.key()), subscribed, watched, inHistory) { bookmarked, sub, w, h ->
+                TileMenuState(teaser, showRef, sub, bookmarked, w, h)
             }
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -79,6 +84,11 @@ class TileMenuViewModel(private val catalog: CatalogRepository, private val libr
         library.setWatched(episode, s.watched != true)
     }
 
+    fun removeFromHistory() = act { s ->
+        val episode = (s.teaser as? Teaser.OfEpisode)?.episode ?: return@act
+        library.removeFromHistory(episode.ref)
+    }
+
     private fun act(block: suspend (TileMenuState) -> Unit) {
         val s = state.value ?: return
         dismiss()
@@ -95,6 +105,7 @@ fun TileMenuDialog(
     onToggleSubscribe: () -> Unit,
     onToggleBookmark: () -> Unit,
     onToggleWatched: () -> Unit,
+    onRemoveFromHistory: () -> Unit,
     onGoToShow: (ShowRef) -> Unit,
 ) {
     val first = remember { FocusRequester() }
@@ -139,6 +150,9 @@ fun TileMenuDialog(
                 stringResource(if (state.watched) R.string.menu_mark_unwatched else R.string.menu_mark_watched),
                 R.drawable.ic_visibility, onToggleWatched,
             )
+        }
+        if (state.inHistory) {
+            entry(stringResource(R.string.menu_remove_history), R.drawable.ic_history, onRemoveFromHistory)
         }
         if (state.showRef != null) {
             entry(stringResource(R.string.action_to_show), R.drawable.ic_tv) { onDismiss(); onGoToShow(state.showRef) }

@@ -125,7 +125,7 @@ class EpisodeViewModel(
         loaded, library.overlay(), library.progress(ref), library.isBookmarked(LibraryKeys.bookmark(ref)),
     ) { l, overlay, progress, bookmarked ->
         if (l == null) EpisodeUiState() else EpisodeUiState(
-            loaded = true, episode = l.episode, failed = l.episode == null, error = l.error, progress = progress, bookmarked = bookmarked,
+            loaded = true, episode = l.episode, failed = l.episode == null, error = l.error, progress = progress ?: l.episode?.let { overlay.progressOf(it) }, bookmarked = bookmarked,
             moreEpisodes = l.others.map { overlay.decorate(it) },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), EpisodeUiState())
