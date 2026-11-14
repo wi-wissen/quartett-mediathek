@@ -33,6 +33,13 @@ Die App gibt es nicht im Play Store, sie wird per Sideloading installiert.
 
 Für ein Update wiederholst du Schritt 3 und 4. Abos, Merkliste und Fortschritt bleiben dabei erhalten.
 
+Ab dann geht es auch ohne Download-App: Die App fragt einmal am Tag bei GitHub nach einer neueren Version und bietet
+sie beim Start an („Jetzt installieren / Später“). Von Hand geht es unter *Einstellungen → App → Nach Updates suchen*.
+Beim ersten Mal musst du der App erlauben, Apps zu installieren (die Einstellungen öffnen sich von selbst). Woher die
+Updates kommen, legt der Build fest: standardmäßig aus dem Repository, das die Version gebaut hat. Mit der
+Repository-Variable `UPDATE_REPO` (*Settings → Secrets and variables → Actions → Variables*, z. B. `wi-wissen/quartett-mediathek`)
+kann es ein anderes sein.
+
 Der Kurzlink zeigt auf
 `https://github.com/wi-wissen/quartett-mediathek/releases/latest/download/quartett-mediathek.apk`.
 

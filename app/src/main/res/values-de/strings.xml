@@ -136,4 +136,25 @@
     <string name="settings_clear_cache_desc">Neue Folgen und Empfehlungen werden einmal am Tag geladen, oben rechts jederzeit von Hand. Bis neue Daten da sind, bleiben die alten sichtbar. Vorschaubilder bleiben gespeichert.</string>
     <string name="settings_cache_cleared">Zwischenspeicher geleert. Die Daten werden beim nächsten Aktualisieren neu geladen.</string>
     <string name="settings_note">Der Fortschritt jeder Folge wird auf dem Fernseher gespeichert. Auf der Startseite kannst du die zuletzt gesehene Folge direkt fortsetzen.</string>
+
+    <!-- Self-updater -->
+    <string name="settings_app_title">App</string>
+    <string name="update_version">Version %1$s</string>
+    <string name="update_last_check">Zuletzt geprüft: %1$s</string>
+    <string name="update_check">Nach Updates suchen</string>
+    <string name="update_check_desc_idle">Die App prüft außerdem einmal am Tag.</string>
+    <string name="update_checking">Suche nach Updates …</string>
+    <string name="update_up_to_date">Du hast die neueste Version.</string>
+    <string name="update_check_failed">Die Suche war nicht möglich. Ist der Fernseher online?</string>
+    <string name="update_install">Jetzt aktualisieren</string>
+    <string name="update_install_desc">Version %1$s ist verfügbar.</string>
+    <string name="update_downloading">Lade Version %1$s … %2$d %%</string>
+    <string name="update_needs_permission">Erlaube dieser App in den gerade geöffneten Einstellungen, Apps zu installieren. Komm dann zurück und wähle noch einmal „Jetzt aktualisieren“.</string>
+    <string name="update_installing">Warte auf den System-Installer. Bestätige dort, danach startet die App neu.</string>
+    <string name="update_download_failed">Der Download hat nicht geklappt. Bitte versuche es noch einmal.</string>
+    <string name="update_install_failed">Die Installation hat nicht geklappt. Bitte versuche es noch einmal.</string>
+    <string name="update_dialog_title">Version %1$s ist verfügbar</string>
+    <string name="update_dialog_text">Du hast Version %1$s. Abos und gesehene Folgen bleiben erhalten.</string>
+    <string name="update_dialog_install">Jetzt installieren</string>
+    <string name="update_dialog_later">Später</string>
 </resources>

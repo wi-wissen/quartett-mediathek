@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ inputs.version }}
+      # Where the app looks for updates. Repository variable UPDATE_REPO overrides; default = this repository.
+      UPDATE_REPO: ${{ vars.UPDATE_REPO || github.repository }}
     steps:
       - name: Check version format
         run: |
@@ -52,7 +54,7 @@ jobs:
           QM_KEYSTORE_PASSWORD: ${{ secrets.QM_KEYSTORE_PASSWORD }}
           QM_KEY_ALIAS: ${{ secrets.QM_KEY_ALIAS }}
           QM_KEY_PASSWORD: ${{ secrets.QM_KEY_PASSWORD }}
-        run: ./gradlew --console=plain :shared:jvmTest :app:assembleRelease -PappVersionName="$VERSION"
+        run: ./gradlew --console=plain :shared:jvmTest :app:assembleRelease -PappVersionName="$VERSION" -PupdateRepo="$UPDATE_REPO"
 
       - name: Publish GitHub release
         env:

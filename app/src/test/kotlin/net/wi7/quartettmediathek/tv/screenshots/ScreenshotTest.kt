@@ -53,6 +53,9 @@ import net.wi7.quartettmediathek.tv.ui.screens.WatchlistUiState
 import net.wi7.quartettmediathek.tv.ui.screens.previewHomeState
 import net.wi7.quartettmediathek.tv.ui.theme.QColors
 import net.wi7.quartettmediathek.tv.ui.theme.QuartettTheme
+import net.wi7.quartettmediathek.tv.update.UpdatePhase
+import net.wi7.quartettmediathek.tv.update.UpdateUiState
+import net.wi7.quartettmediathek.update.ReleaseInfo
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -153,6 +156,11 @@ class GermanScreenshots : ScreenshotTest("de") {
     }
 
     @Test
+    fun settingsUpdate() = snap("settings_update", Routes.SETTINGS) {
+        SettingsContent(SettingsUiState(true, StartScreen.HOME), {}, {}, update = previewUpdate(UpdatePhase.Idle))
+    }
+
+    @Test
     fun show() = snap("show", Routes.HOME) {
         val eps = FakeData.episodesByShow.getValue("hafenrevier")
         ShowContent(
@@ -186,6 +194,11 @@ class GermanScreenshots : ScreenshotTest("de") {
     }
 
     @Test
+    fun settingsUpdateDownloading() = snap("settings_update_downloading", Routes.SETTINGS) {
+        SettingsContent(SettingsUiState(true, StartScreen.HOME), {}, {}, update = previewUpdate(UpdatePhase.Downloading, 0.42f))
+    }
+
+    @Test
     fun episode() = snap("episode", Routes.HOME) {
         val ep = FakeData.episode("abgruende-3")
         EpisodeContent(
@@ -215,3 +228,9 @@ class EnglishScreenshots : ScreenshotTest("en") {
         )
     }
 }
+
+private fun previewUpdate(phase: UpdatePhase, progress: Float = 0f) = UpdateUiState(
+    enabled = true, currentVersion = "0.1.2", lastCheckMs = (FakeData.now - 2.hours).toEpochMilliseconds(),
+    phase = phase, progress = progress,
+    release = ReleaseInfo("v0.1.3", "0.1.3", 103, "https://example.org/quartett-mediathek.apk", 3_162_376, null),
+)
