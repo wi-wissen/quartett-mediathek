@@ -51,6 +51,7 @@ import net.wi7.quartettmediathek.tv.ui.components.GridTileWidth
 import net.wi7.quartettmediathek.tv.ui.components.HorizontalItems
 import net.wi7.quartettmediathek.tv.ui.components.LocalTileActions
 import net.wi7.quartettmediathek.tv.ui.components.PreviewHost
+import net.wi7.quartettmediathek.tv.ui.components.QButton
 import net.wi7.quartettmediathek.tv.ui.components.RowHeader
 import net.wi7.quartettmediathek.tv.ui.components.ScreenColumn
 import net.wi7.quartettmediathek.tv.ui.components.TeaserTile
@@ -107,13 +108,16 @@ fun SubscriptionsScreen() {
 
 private const val AllAvatar = "av:all"
 private const val GridColumns = 4
+private const val KeyToShow = "btn:show"
 
 @Composable
 fun SubscriptionsContent(state: SubscriptionsUiState, onSelect: (String?) -> Unit) {
     val avatarKeys = listOf(AllAvatar) + state.avatars.map { "av:${it.id}" }
     val gridRows = state.tiles.chunked(GridColumns)
-    // Row 0 = avatars, row 1 = grid header (not focusable), then one row per grid line.
-    val rows = listOf(avatarKeys, emptyList()) + gridRows.map { r -> r.map { "g:${it.key}" } }
+    val selectedShow = state.avatars.firstOrNull { it.id == state.filter }
+    // Row 0 = avatars, row 1 = grid header (focusable only for the "Go to show" button), then one row per grid line.
+    val headerKeys = if (selectedShow?.show != null) listOf(KeyToShow) else emptyList()
+    val rows = listOf(avatarKeys, headerKeys) + gridRows.map { r -> r.map { "g:${it.key}" } }
     val sf = rememberScreenFocus("subscriptions", if (state.loaded) rows else emptyList())
     val listState = rememberLazyListState()
     InitialFocusEffect(sf, listState)
@@ -134,8 +138,16 @@ fun SubscriptionsContent(state: SubscriptionsUiState, onSelect: (String?) -> Uni
             }
         }
         item(key = "header") {
-            val title = state.avatars.firstOrNull { it.id == state.filter }?.title ?: stringResource(R.string.subscriptions_all_episodes)
-            RowHeader(title, stringResource(R.string.subscriptions_newest_first))
+            val title = selectedShow?.title ?: stringResource(R.string.subscriptions_all_episodes)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RowHeader(title, stringResource(R.string.subscriptions_newest_first), Modifier.weight(1f, fill = false))
+                selectedShow?.show?.let { show ->
+                    QButton(
+                        stringResource(R.string.action_to_show), onClick = { actions.openShow(show.ref) },
+                        modifier = Modifier.padding(start = 16.dp).tracked(sf, KeyToShow), icon = R.drawable.ic_tv,
+                    )
+                }
+            }
         }
         if (state.avatars.isEmpty() && state.loaded) {
             item(key = "empty") {

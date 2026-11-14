@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -87,6 +90,9 @@ fun AppShell(startRoute: String) {
     val backStackEntry by nav.currentBackStackEntryAsState()
     val route = backStackEntry?.destination?.route
     val isPlayer = route == Routes.PLAYER_PATTERN
+    // The player stays composed for a moment after Back; the rail and header wait until it has left composition.
+    var playersComposed by remember { mutableIntStateOf(0) }
+    val showChrome = shellChromeVisible(isPlayer, playersComposed)
     val isTopLevel = route in Routes.topLevel
 
     // Rail highlights the top-level screen the current page belongs to (Show/Episode keep their parent highlighted).
@@ -118,25 +124,25 @@ fun AppShell(startRoute: String) {
             NavHost(
                 navController = nav,
                 startDestination = startRoute,
-                modifier = Modifier.fillMaxSize().padding(start = if (isPlayer) 0.dp else RailWidth),
+                modifier = Modifier.fillMaxSize(),
                 // No transitions: the previous screen must leave composition at once so focus requesters stay unique.
                 enterTransition = { EnterTransition.None },
                 exitTransition = { ExitTransition.None },
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None },
             ) {
-                composable(Routes.HOME) { HomeScreen() }
-                composable(Routes.DISCOVER) { DiscoverScreen() }
-                composable(Routes.SEARCH) { SearchScreen() }
-                composable(Routes.SUBSCRIPTIONS) { SubscriptionsScreen() }
-                composable(Routes.BOOKMARKS) { WatchlistScreen() }
-                composable(Routes.HISTORY) { HistoryScreen() }
-                composable(Routes.SETTINGS) { SettingsScreen() }
-                composable(Routes.SHOW_PATTERN) { e -> ShowScreen(Routes.showRef(e.arg("source"), e.arg("key"))) }
-                composable(Routes.EPISODE_PATTERN) { e -> EpisodeScreen(Routes.episodeRef(e.arg("source"), e.arg("key"))) }
-                composable(
-                    Routes.PLAYER_PATTERN,
-                    arguments = listOf(navArgument("start") { type = NavType.LongType }),
+                railDestination(Routes.HOME) { HomeScreen() }
+                railDestination(Routes.DISCOVER) { DiscoverScreen() }
+                railDestination(Routes.SEARCH) { SearchScreen() }
+                railDestination(Routes.SUBSCRIPTIONS) { SubscriptionsScreen() }
+                railDestination(Routes.BOOKMARKS) { WatchlistScreen() }
+                railDestination(Routes.HISTORY) { HistoryScreen() }
+                railDestination(Routes.SETTINGS) { SettingsScreen() }
+                railDestination(Routes.SHOW_PATTERN) { e -> ShowScreen(Routes.showRef(e.arg("source"), e.arg("key"))) }
+                railDestination(Routes.EPISODE_PATTERN) { e -> EpisodeScreen(Routes.episodeRef(e.arg("source"), e.arg("key"))) }
+                playerDestination(
+                    onComposed = { playersComposed++ },
+                    onDisposed = { playersComposed-- },
                 ) { e ->
                     val start = e.arguments?.getLong("start") ?: -1L
                     PlayerScreen(
@@ -146,7 +152,7 @@ fun AppShell(startRoute: String) {
                     )
                 }
             }
-            if (!isPlayer) {
+            if (showChrome) {
                 ShellHeader(shell, onRefresh = shellVm::refresh, modifier = Modifier.align(Alignment.TopEnd))
                 AppRail(
                     activeRoute = lastTopLevel,
@@ -178,6 +184,32 @@ fun AppShell(startRoute: String) {
                 )
             }
         }
+    }
+}
+
+/** Pure rule: rail and header are shown only when the player is not the current page and no player is still composed. */
+internal fun shellChromeVisible(isPlayer: Boolean, playersComposed: Int): Boolean = !isPlayer && playersComposed == 0
+
+/** A destination that sits right of the rail; the padding is part of the destination, so the player never gets it. */
+internal fun NavGraphBuilder.railDestination(route: String, content: @Composable (NavBackStackEntry) -> Unit) {
+    composable(route) { e -> Box(Modifier.fillMaxSize().padding(start = RailWidth)) { content(e) } }
+}
+
+/** The full-screen player destination (no padding). [onComposed]/[onDisposed] report when it enters/leaves composition. */
+internal fun NavGraphBuilder.playerDestination(
+    onComposed: () -> Unit = {},
+    onDisposed: () -> Unit = {},
+    content: @Composable (NavBackStackEntry) -> Unit,
+) {
+    composable(
+        Routes.PLAYER_PATTERN,
+        arguments = listOf(navArgument("start") { type = NavType.LongType }),
+    ) { e ->
+        DisposableEffect(Unit) {
+            onComposed()
+            onDispose(onDisposed)
+        }
+        Box(Modifier.fillMaxSize()) { content(e) }
     }
 }
 

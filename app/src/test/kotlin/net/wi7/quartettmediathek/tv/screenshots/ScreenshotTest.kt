@@ -100,6 +100,20 @@ abstract class ScreenshotTest(private val locale: String) {
             }
         }
 
+
+    /** One show selected as filter: the grid heading carries the secondary "Go to show" button. */
+    protected fun subscriptionsWithSelectedShow(): SubscriptionsUiState {
+        val shows = FakeData.shows.take(6)
+        val selected = shows[1]
+        val eps = FakeData.allEpisodes.filter { it.showRef == selected.ref }.sortedByDescending { it.publishedAt }
+        return SubscriptionsUiState(
+            true,
+            shows.mapIndexed { i, s -> AvatarState(s.ref.key, s.title, null, i % 2 == 0, s) },
+            selected.ref.key,
+            eps.mapIndexed { i, e -> overlay.decorate(e).copy(isNew = i < 1) },
+        )
+    }
+
     companion object {
         val TOP_LEVEL = listOf(Routes.HOME, Routes.DISCOVER, Routes.SEARCH, Routes.SUBSCRIPTIONS, Routes.BOOKMARKS, Routes.HISTORY, Routes.SETTINGS)
     }
@@ -138,6 +152,11 @@ class GermanScreenshots : ScreenshotTest("de") {
                 eps.mapIndexed { i, e -> overlay.decorate(e).copy(isNew = i < 3) },
             ),
         ) {}
+    }
+
+    @Test
+    fun subscriptionsShow() = snap("subscriptions_show", Routes.SUBSCRIPTIONS) {
+        SubscriptionsContent(subscriptionsWithSelectedShow()) {}
     }
 
     @Test
@@ -215,6 +234,11 @@ class GermanScreenshots : ScreenshotTest("de") {
 /** English UI (device not set to German): one screen is enough to catch missing or overflowing strings. */
 @Config(sdk = [35], application = Application::class, qualifiers = TV_EN)
 class EnglishScreenshots : ScreenshotTest("en") {
+    @Test
+    fun subscriptionsShow() = snap("subscriptions_show", Routes.SUBSCRIPTIONS) {
+        SubscriptionsContent(subscriptionsWithSelectedShow()) {}
+    }
+
     @Test
     fun home() = snap("home", Routes.HOME) { HomeContent(previewHomeState()) }
 
