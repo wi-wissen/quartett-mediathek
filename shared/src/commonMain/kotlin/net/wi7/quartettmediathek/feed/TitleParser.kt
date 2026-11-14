@@ -33,7 +33,13 @@ object TitleParser {
         ),
         // "klare Sprache" (plain language) has no variant of its own; it is treated as an alternative version.
         Variant.ORIGINAL_VERSION to listOf(
-            bracket("originalversion|ov|omu|klare sprache"),
+            // Language versions: "(Englisch)", "(Originalfassung)", "(OmU)", "(englische Originalfassung)" ...
+            bracket(
+                "originalversion|originalfassung|ov|omu|klare sprache|" +
+                    "(?:englische|französische|italienische|spanische)?\\s*(?:originalfassung|fassung)|" +
+                    "englisch|französisch|italienisch|spanisch|polnisch|türkisch|english|version originale|" +
+                    "original mit untertitel|originalton",
+            ),
         ),
     )
 

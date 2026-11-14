@@ -60,4 +60,18 @@ class TitleParserTest {
         assertEquals(normalizeText("Käse  Ärger"), normalizeText("kaese aerger"))
         assertEquals("strasse", normalizeText("Straße"))
     }
+
+    @Test
+    fun languageVersionsAreVariants() {
+        // Real MediathekViewWeb titles (ZDFneo, "Die Ringe der Macht").
+        val en = TitleParser.parse("Schatten und Flammen (S02/E08) (Englisch)")
+        assertEquals("Schatten und Flammen", en.title)
+        assertEquals(Variant.ORIGINAL_VERSION, en.variant)
+        assertEquals(2, en.season)
+        assertEquals(8, en.episode)
+        assertEquals(Variant.AUDIO_DESCRIPTION, TitleParser.parse("Schatten und Flammen (S02/E08) (Audiodeskription)").variant)
+        assertEquals(Variant.STANDARD, TitleParser.parse("Schatten und Flammen (S02/E08)").variant)
+        assertEquals(Variant.ORIGINAL_VERSION, TitleParser.parse("Le Mépris (Originalfassung)").variant)
+        assertEquals(Variant.ORIGINAL_VERSION, TitleParser.parse("Film (englische Originalfassung)").variant)
+    }
 }

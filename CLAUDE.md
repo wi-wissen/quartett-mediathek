@@ -13,13 +13,17 @@ Read `docs/SPEC.md` first. Visual reference: `docs/mockup.html`.
   at runtime from the internet.
 - Keep functions small, prefer pure functions for logic (dedupe, parsing, mapping, seek) and unit test them in
   `shared/src/commonTest` (runs on the JVM).
-- Network tests against live APIs are not part of the normal test run. Record JSON fixtures into
+- After any change to the data layer run the live suite (`-Plive=1`, `shared/src/jvmTest/.../live/LiveBackendTest.kt`);
+  extend it with every user-reported bug as a flow first, then fix.
+  DACH-geoblocked streams answer 403 outside Germany/Austria/Switzerland and are only logged.
+- Other network tests against live APIs are not part of the normal test run. Record JSON fixtures into
   `shared/src/jvmTest/resources/fixtures/` and test parsers against them with Ktor `MockEngine`.
 
 ## Build (this container)
 ```
 export ANDROID_HOME=/home/user/android-sdk
-./gradlew :shared:jvmTest            # fast logic tests
+./gradlew :shared:jvmTest            # fast logic tests (offline)
+./gradlew :shared:jvmTest -Plive=1 --tests '*live*'   # end-to-end user flows against the LIVE APIs, incl. app restarts
 ./gradlew :app:assembleDebug         # TV app
 ./gradlew :shared:jvmTest :app:assembleDebug :app:lintDebug
 ./gradlew :app:recordRoborazziDebug   # re-record screenshots after an intended UI change

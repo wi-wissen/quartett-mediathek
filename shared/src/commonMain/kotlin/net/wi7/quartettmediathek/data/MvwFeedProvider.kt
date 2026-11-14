@@ -47,6 +47,7 @@ class MvwFeedProvider(
         if (force) forceNext = false
         index.rememberMvw(entries)
         withImages(subscription, entries.mapNotNull { e -> e.toEpisode()?.let { FeedCandidate(it, e.urlVideo, e.size) } })
+            .also { candidates -> index.rememberEpisodes(candidates.map { it.episode }) }
     }
 
     /**

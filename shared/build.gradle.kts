@@ -64,3 +64,10 @@ sqldelight {
         }
     }
 }
+
+// Live end-to-end tests (LiveBackendTest) only run when asked: ./gradlew :shared:jvmTest -Plive=1 --tests '*live*'
+tasks.withType<Test>().configureEach {
+    systemProperty("qm.live", providers.gradleProperty("live").getOrElse("0"))
+    if (providers.gradleProperty("live").isPresent) outputs.upToDateWhen { false }
+    testLogging { showStandardStreams = providers.gradleProperty("live").isPresent }
+}

@@ -179,7 +179,9 @@ class DefaultCatalogRepository(
             SourceId.ARD -> ard.episode(ref)
             SourceId.ZDF -> zdf.episode(ref)
             SourceId.ARTE -> arte.episode(ref)
-            SourceId.MVW -> throw SourceException("Episode ${ref.key} is no longer known, please open it from its show again")
+            // MediathekViewWeb hits are kept in the content cache (feed, search, show pages), so rebuild from there.
+            SourceId.MVW -> index.mvwEntry(ref.key)?.toEpisode()?.let { withImage(it) }
+                ?: throw SourceException("Episode ${ref.key} is no longer available in MediathekViewWeb")
         }
         index.rememberEpisodes(listOf(loaded))
         return loaded
