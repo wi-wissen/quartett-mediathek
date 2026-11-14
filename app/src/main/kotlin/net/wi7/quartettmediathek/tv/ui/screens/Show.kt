@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -157,6 +158,7 @@ fun ShowContent(
     onToggleSubscribe: () -> Unit,
     onToggleBookmark: () -> Unit,
     onUpdateSubscription: (Subscription) -> Unit,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     val show = state.show
     val actions = LocalTileActions.current
@@ -164,7 +166,6 @@ fun ShowContent(
     val heroKeys = listOf(KeyPlay, KeySubscribe) + (if (state.subscription != null) listOf(KeyAdjust) else emptyList()) + KeyBookmark
     val rows = listOf(heroKeys, state.episodes.map { "episodes:${it.key}" }, state.moreFromBroadcaster.map { "more:${it.key}" })
     val sf = rememberScreenFocus(focusId, if (state.loaded && show != null) rows else emptyList())
-    val listState = rememberLazyListState()
     InitialFocusEffect(sf, listState)
     if (state.loaded && show == null) {
         Text(stringResource(R.string.error_load), style = QType.body, color = QColors.Muted, modifier = Modifier.padding(start = 24.dp, top = 80.dp))
