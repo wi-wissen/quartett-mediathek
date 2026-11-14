@@ -3,6 +3,7 @@ package net.wi7.quartettmediathek.tv.player
 import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -18,10 +19,16 @@ import net.wi7.quartettmediathek.model.Variant
 data class PlaybackSession(
     val episode: Episode,
     val stream: StreamInfo,
+    /** The version that plays (audio description is selected as audio track when the stream has one). */
     val variant: Variant,
     val startPositionMs: Long,
     val next: Episode?,
-)
+    /** The ref the stream was resolved for; differs from [episode] after switching to another version's file. */
+    val streamRef: EpisodeRef = episode.ref,
+) {
+    /** Versions the user can switch to; fewer than two means there is nothing to choose. */
+    val versions: List<VersionOption> = PlayerLogic.versionOptions(episode.versionRefs, streamRef, stream)
+}
 
 enum class PlayerError { NOT_FOUND, STREAM, PLAYBACK }
 
@@ -41,6 +48,9 @@ class PlayerViewModel(
 
     private val _bookmarked = MutableStateFlow(false)
     val bookmarked: StateFlow<Boolean> = _bookmarked
+
+    private val _versionFailed = MutableStateFlow(false)
+    val versionFailed: StateFlow<Boolean> = _versionFailed
 
     private var currentEpisode: Episode? = null
     private var lastPositionSeconds = 0L
@@ -66,12 +76,13 @@ class PlayerViewModel(
             val subscriptionVariant = episode.showRef?.let { show ->
                 runCatching { deps.library.subscriptionFor(show).first()?.preferredVariant }.getOrNull()
             }
-            val variant = PlayerLogic.preferredVariant(subscriptionVariant, episode.variants)
-            val stream = runCatching { deps.playback.stream(ref, variant) }.getOrNull()
+            val requested = PlayerLogic.preferredVariant(subscriptionVariant, episode.variants)
+            val stream = runCatching { deps.playback.stream(ref, requested) }.getOrNull()
             if (stream == null) {
                 _state.value = PlayerUiState.Error(PlayerError.STREAM)
                 return@launch
             }
+            val variant = PlayerLogic.activeVersion(episode.versionRefs, ref, requested, stream)
             val next = episode.showRef?.let { show ->
                 runCatching { PlayerLogic.nextEpisode(deps.catalog.episodes(show), ref) }.getOrNull()
             }
@@ -80,6 +91,32 @@ class PlayerViewModel(
             )
             _bookmarked.value = runCatching { deps.library.isBookmarked(bookmarkKey(ref)).first() }.getOrDefault(false)
             _state.value = PlayerUiState.Ready(PlaybackSession(episode, stream, variant, start * 1000, next))
+        }
+    }
+
+    /**
+     * Switches to another version at [positionMs]: resolves the version's own stream, or keeps the current one when
+     * the version is an audio track of it. Progress stays attached to the episode the user started. On failure the
+     * current version keeps playing and [versionFailed] is true for a moment.
+     */
+    fun switchVersion(option: VersionOption, positionMs: Long) {
+        val session = (state.value as? PlayerUiState.Ready)?.session ?: return
+        if (option.variant == session.variant) return
+        viewModelScope.launch {
+            val stream = if (option.audioTrack) session.stream
+            else runCatching { deps.playback.stream(option.ref, option.variant) }.getOrNull()
+            if (stream == null) {
+                _versionFailed.value = true
+                delay(VERSION_FAILED_MS)
+                _versionFailed.value = false
+                return@launch
+            }
+            // The user may have skipped to another episode while the stream was resolving.
+            val now = (state.value as? PlayerUiState.Ready)?.session
+            if (now == null || now.episode.ref != session.episode.ref) return@launch
+            _state.value = PlayerUiState.Ready(
+                now.copy(stream = stream, variant = option.variant, startPositionMs = positionMs, streamRef = option.ref),
+            )
         }
     }
 
@@ -119,6 +156,8 @@ class PlayerViewModel(
 
     companion object {
         /** Watchlist key of an episode; the rest of the UI must use the same format. */
+        private const val VERSION_FAILED_MS = 3000L
+
         fun bookmarkKey(ref: EpisodeRef) = LibraryKeys.bookmark(ref)
     }
 }

@@ -50,6 +50,12 @@
     <string name="player_bookmark">Save</string>
     <string name="player_bookmarked">Saved</string>
     <string name="player_next">Next episode</string>
+    <string name="player_version_button">Audio / Language</string>
+    <string name="player_version_standard">German</string>
+    <string name="player_version_original">English</string>
+    <string name="player_version_ad">German with audio description</string>
+    <string name="player_version_dgs">German with sign language</string>
+    <string name="player_version_failed">Audio version unavailable</string>
     <string name="player_episode_number">Episode %1$d</string>
     <string name="player_available_until">available until %1$s</string>
     <string name="player_step_seconds">%1$d s</string>

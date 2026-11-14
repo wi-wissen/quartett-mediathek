@@ -2,7 +2,14 @@ package net.wi7.quartettmediathek.tv.player
 
 import net.wi7.quartettmediathek.model.Episode
 import net.wi7.quartettmediathek.model.EpisodeRef
+import net.wi7.quartettmediathek.model.StreamInfo
 import net.wi7.quartettmediathek.model.Variant
+
+/**
+ * One selectable version of the episode. [ref] is where its stream comes from; [audioTrack] means it is an audio
+ * track of the stream that already plays (ZDF audio description), so no new stream is resolved.
+ */
+data class VersionOption(val variant: Variant, val ref: EpisodeRef, val audioTrack: Boolean = false)
 
 /** Pure player state logic (no Android dependencies, unit tested). */
 object PlayerLogic {
@@ -73,5 +80,37 @@ object PlayerLogic {
         val sign = if (deltaSeconds < 0) "−" else "+"
         val base = sign + formatTime(kotlin.math.abs(deltaSeconds))
         return if (stepLabel != null) "$base · $stepLabel" else base
+    }
+
+    /** Order of the version chooser. */
+    val VERSION_ORDER = listOf(Variant.STANDARD, Variant.ORIGINAL_VERSION, Variant.AUDIO_DESCRIPTION, Variant.SIGN_LANGUAGE)
+
+    /**
+     * Versions to offer while [playedRef] plays [stream]: every ref in [versionRefs] (separate files, e.g. from
+     * MediathekViewWeb) plus, when no audio description file exists but the stream has an "ad" audio track (ZDF),
+     * that track (and the main track as standard). Sorted by [VERSION_ORDER]. One entry or none means: no chooser.
+     */
+    fun versionOptions(versionRefs: Map<Variant, EpisodeRef>, playedRef: EpisodeRef, stream: StreamInfo): List<VersionOption> {
+        val options = versionRefs.map { (variant, ref) -> VersionOption(variant, ref) }.toMutableList()
+        if (Variant.AUDIO_DESCRIPTION !in versionRefs && "ad" in stream.audioTracks) {
+            options += VersionOption(Variant.AUDIO_DESCRIPTION, playedRef, audioTrack = true)
+            if (Variant.STANDARD !in versionRefs) options += VersionOption(Variant.STANDARD, playedRef, audioTrack = true)
+        }
+        return options.sortedBy { VERSION_ORDER.indexOf(it.variant) }
+    }
+
+    /**
+     * The version that actually plays: the one whose ref is [playedRef], else audio description when it was
+     * requested and the stream has the "ad" track, else standard.
+     */
+    fun activeVersion(versionRefs: Map<Variant, EpisodeRef>, playedRef: EpisodeRef, requested: Variant, stream: StreamInfo): Variant =
+        versionRefs.entries.firstOrNull { it.value == playedRef }?.key
+            ?: if (requested == Variant.AUDIO_DESCRIPTION && "ad" in stream.audioTracks) Variant.AUDIO_DESCRIPTION else Variant.STANDARD
+
+    /** The option after [current] in [options] (wrapping); the first one if [current] is not among them. */
+    fun nextVersion(options: List<VersionOption>, current: Variant): VersionOption? {
+        if (options.isEmpty()) return null
+        val i = options.indexOfFirst { it.variant == current }
+        return options[(i + 1) % options.size]
     }
 }

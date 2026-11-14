@@ -186,6 +186,7 @@ private fun PlayerContent(
     var press by remember { mutableStateOf<SeekAccelerator.Press?>(null) }
     var hintHold by remember { mutableStateOf<Pair<Long, String>?>(null) }
     val bookmarked by vm.bookmarked.collectAsState()
+    val versionFailed by vm.versionFailed.collectAsState()
     val playPauseFocus = remember { FocusRequester() }
     val accelerator = remember { SeekAccelerator() }
 
@@ -311,10 +312,15 @@ private fun PlayerContent(
 
     val separator = remember { java.text.DecimalFormatSymbols.getInstance(Locale.getDefault()).decimalSeparator }
     val speedLabel = PlayerLogic.formatSpeed(speed, separator)
+    val versionLabel = stringResource(versionLabelRes(session.variant))
     val model = OsdModel(
         showTitle = episode.showTitle,
         channel = episode.channelLabel,
-        infoRight = infoRight(session.stream, speed, speedLabel, subtitlesOn && session.stream.subtitles.isNotEmpty()),
+        infoRight = infoRight(
+            session.stream, speed, speedLabel, subtitlesOn && session.stream.subtitles.isNotEmpty(),
+            version = versionLabel.takeIf { session.versions.size > 1 || session.variant != Variant.STANDARD },
+            versionFailed = versionFailed,
+        ),
         episodeTitle = episode.title,
         subLine = subLine(episode),
         positionSeconds = positionMs / 1000,
@@ -323,6 +329,8 @@ private fun PlayerContent(
         seekHint = seekHint,
         playing = playing,
         speedLabel = speedLabel,
+        versionAvailable = session.versions.size > 1,
+        versionLabel = stringResource(R.string.player_version_button),
         subtitlesAvailable = session.stream.subtitles.isNotEmpty(),
         subtitlesLabel = stringResource(if (subtitlesOn) R.string.player_subtitles_on else R.string.player_subtitles),
         bookmarked = bookmarked,
@@ -334,6 +342,12 @@ private fun PlayerContent(
     val actions = OsdActions(
         onPlayPause = { togglePlay() },
         onSpeed = { onSpeed(PlayerLogic.nextSpeed(speed)); touch() },
+        onVersion = {
+            PlayerLogic.nextVersion(session.versions, session.variant)?.let {
+                vm.switchVersion(it, player.currentPosition)
+            }
+            touch()
+        },
         onSubtitles = { onSubtitles(!subtitlesOn); touch() },
         onBookmark = { vm.toggleBookmark(); touch() },
         onNext = {
@@ -416,16 +430,27 @@ private fun PlayerContent(
     }
 }
 
+private fun versionLabelRes(variant: Variant): Int = when (variant) {
+    Variant.STANDARD -> R.string.player_version_standard
+    Variant.ORIGINAL_VERSION -> R.string.player_version_original
+    Variant.AUDIO_DESCRIPTION -> R.string.player_version_ad
+    Variant.SIGN_LANGUAGE -> R.string.player_version_dgs
+}
+
 @Composable
 private fun stepLabel(seconds: Int): String =
     if (seconds < 60) stringResource(R.string.player_step_seconds, seconds)
     else stringResource(R.string.player_step_minutes, seconds / 60)
 
 @Composable
-private fun infoRight(stream: StreamInfo, speed: Float, speedLabel: String, subtitlesOn: Boolean): String {
+private fun infoRight(
+    stream: StreamInfo, speed: Float, speedLabel: String, subtitlesOn: Boolean,
+    version: String?, versionFailed: Boolean,
+): String {
     val format = if (stream.mimeType.contains("mpegurl", ignoreCase = true)) "HLS" else "MP4"
     val quality = stream.height?.let { (if (it >= 720) "HD " else "") + "${it}p" }
     val parts = listOfNotNull(
+        if (versionFailed) stringResource(R.string.player_version_failed) else version,
         format, quality,
         speedLabel.takeIf { speed != 1f },
         stringResource(R.string.player_subtitles_on).takeIf { subtitlesOn },
