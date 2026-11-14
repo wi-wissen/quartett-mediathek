@@ -174,10 +174,15 @@ class DefaultCatalogRepository(
     override suspend fun episode(ref: EpisodeRef): Episode {
         index.episode(ref)?.let { return withImage(it) }
         snapshotLookup(ref)?.let { return withImage(it) }
-        return when (ref.source) {
-            SourceId.ARTE -> arte.episode(ref).also { index.rememberEpisodes(listOf(it)) }
-            else -> throw SourceException("Episode ${ref.source}:${ref.key} is not known")
+        // Not seen in this process (e.g. after an app restart): load it from its source.
+        val loaded = when (ref.source) {
+            SourceId.ARD -> ard.episode(ref)
+            SourceId.ZDF -> zdf.episode(ref)
+            SourceId.ARTE -> arte.episode(ref)
+            SourceId.MVW -> throw SourceException("Episode ${ref.key} is no longer known, please open it from its show again")
         }
+        index.rememberEpisodes(listOf(loaded))
+        return loaded
     }
 
     /** Episodes from older snapshots or beyond the list limit may lack a thumbnail: look it up (cached). */

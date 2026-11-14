@@ -81,6 +81,7 @@
     <string name="meta_subscribed">subscribed</string>
     <string name="new_episodes_count">%1$d new episodes</string>
     <string name="newest_first">newest first</string>
+    <string name="action_retry">Try again</string>
     <string name="error_load">This content could not be loaded.</string>
 
     <string name="row_episodes">Episodes</string>

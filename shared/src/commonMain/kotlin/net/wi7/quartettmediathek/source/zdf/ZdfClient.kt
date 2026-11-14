@@ -157,6 +157,13 @@ class ZdfClient(
         return show to sorted
     }
 
+    /** A single episode by its canonical, e.g. after an app restart when no show page was loaded. */
+    suspend fun episode(ref: EpisodeRef): Episode {
+        val video = graphQl(ZdfQueries.VIDEO_BY_CANONICAL, mapOf("c" to JsonPrimitive(ref.key)))["videoByCanonical"]
+        return mapVideo(video ?: throw SourceException("ZDF episode ${ref.key} not found"))
+            ?: throw SourceException("ZDF episode ${ref.key} not found")
+    }
+
     /** Teaser picture (768x432) of a video by its canonical, or null when it has none. */
     suspend fun videoImage(canonical: String): String? {
         val video = graphQl(ZdfQueries.VIDEO_IMAGE, mapOf("c" to JsonPrimitive(canonical)))["videoByCanonical"]

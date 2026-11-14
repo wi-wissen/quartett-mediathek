@@ -62,6 +62,7 @@ import net.wi7.quartettmediathek.tv.ui.key
 import net.wi7.quartettmediathek.tv.ui.menu.SubscriptionDialog
 import net.wi7.quartettmediathek.tv.ui.overlay
 import net.wi7.quartettmediathek.tv.ui.theme.QColors
+import net.wi7.quartettmediathek.tv.ui.components.LoadError
 import net.wi7.quartettmediathek.tv.ui.theme.QType
 
 data class ShowUiState(
@@ -75,6 +76,7 @@ data class ShowUiState(
     val resumeEpisode: Episode? = null,
     val resumePosition: Long? = null,
     val moreFromBroadcaster: List<TileState> = emptyList(),
+    val error: String? = null,
 )
 
 /** Show page: [CatalogRepository.show] / [CatalogRepository.episodes] plus subscription, bookmark and progress state. */
@@ -83,11 +85,16 @@ class ShowViewModel(
     private val catalog: CatalogRepository,
     private val library: LibraryRepository,
 ) : ViewModel() {
-    private class Loaded(val show: Show?, val episodes: List<Episode>, val more: List<Teaser>, val failed: Boolean)
+    private class Loaded(val show: Show?, val episodes: List<Episode>, val more: List<Teaser>, val failed: Boolean, val error: String? = null)
 
     private val loaded = MutableStateFlow<Loaded?>(null)
 
-    init {
+    init { load() }
+
+    fun retry() = load()
+
+    private fun load() {
+        loaded.value = null
         viewModelScope.launch {
             loaded.value = try {
                 val show = catalog.show(ref)
@@ -99,7 +106,7 @@ class ShowViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Loaded(null, emptyList(), emptyList(), true)
+                Loaded(null, emptyList(), emptyList(), true, e.message ?: e::class.simpleName)
             }
         }
     }
@@ -112,7 +119,7 @@ class ShowViewModel(
             val resume = tiles.firstOrNull { it.progressSeconds != null }
                 ?: tiles.firstOrNull { !it.watched } ?: tiles.firstOrNull()
             ShowUiState(
-                loaded = true, show = l.show, failed = l.failed, episodes = tiles, subscription = subscription, bookmarked = bookmarked,
+                loaded = true, show = l.show, failed = l.failed, error = l.error, episodes = tiles, subscription = subscription, bookmarked = bookmarked,
                 resumeEpisode = (resume?.teaser as? Teaser.OfEpisode)?.episode, resumePosition = resume?.progressSeconds,
                 moreFromBroadcaster = l.more.map { overlay.decorate(it) },
             )
@@ -143,7 +150,7 @@ fun ShowScreen(ref: ShowRef) {
     val container = LocalAppContainer.current
     val vm: ShowViewModel = viewModel(key = "show-${ref.source}-${ref.key}", factory = ViewModelFactory(container, showRef = ref))
     val state by vm.state.collectAsStateWithLifecycle()
-    ShowContent(state, "show-${ref.source}-${ref.key}", vm::toggleSubscribe, vm::toggleBookmark, vm::updateSubscription)
+    ShowContent(state, "show-${ref.source}-${ref.key}", vm::toggleSubscribe, vm::toggleBookmark, vm::updateSubscription, onRetry = vm::retry)
 }
 
 private const val KeyPlay = "hero:play"
@@ -159,6 +166,7 @@ fun ShowContent(
     onToggleBookmark: () -> Unit,
     onUpdateSubscription: (Subscription) -> Unit,
     listState: LazyListState = rememberLazyListState(),
+    onRetry: () -> Unit = {},
 ) {
     val show = state.show
     val actions = LocalTileActions.current
@@ -168,7 +176,7 @@ fun ShowContent(
     val sf = rememberScreenFocus(focusId, if (state.loaded && show != null) rows else emptyList())
     InitialFocusEffect(sf, listState)
     if (state.loaded && show == null) {
-        Text(stringResource(R.string.error_load), style = QType.body, color = QColors.Muted, modifier = Modifier.padding(start = 24.dp, top = 80.dp))
+        LoadError(state.error, onRetry)
         return
     }
     if (show == null) return

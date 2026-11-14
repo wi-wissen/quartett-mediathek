@@ -71,6 +71,7 @@ import net.wi7.quartettmediathek.tv.ui.minutesLeft
 import net.wi7.quartettmediathek.tv.ui.overlay
 import net.wi7.quartettmediathek.tv.ui.progressFraction
 import net.wi7.quartettmediathek.tv.ui.theme.QColors
+import net.wi7.quartettmediathek.tv.ui.components.LoadError
 import net.wi7.quartettmediathek.tv.ui.theme.QType
 import java.time.format.FormatStyle
 
@@ -81,6 +82,7 @@ data class EpisodeUiState(
     val progress: Progress? = null,
     val bookmarked: Boolean = false,
     val moreEpisodes: List<TileState> = emptyList(),
+    val error: String? = null,
 )
 
 /** Episode page: [CatalogRepository.episode] plus progress, bookmark state and the other episodes of the show. */
@@ -89,20 +91,32 @@ class EpisodeViewModel(
     private val catalog: CatalogRepository,
     private val library: LibraryRepository,
 ) : ViewModel() {
-    private class Loaded(val episode: Episode?, val others: List<Episode>)
+    private class Loaded(val episode: Episode?, val others: List<Episode>, val error: String? = null)
 
     private val loaded = MutableStateFlow<Loaded?>(null)
 
-    init {
+    init { load() }
+
+    fun retry() = load()
+
+    private fun load() {
+        loaded.value = null
         viewModelScope.launch {
             loaded.value = try {
                 val episode = catalog.episode(ref)
-                val others = episode.showRef?.let { catalog.episodes(it) }.orEmpty().filter { it.ref != ref }
+                // The other episodes are a bonus: if they fail, the page still opens.
+                val others = try {
+                    episode.showRef?.let { catalog.episodes(it) }.orEmpty().filter { it.ref != ref }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    emptyList()
+                }
                 Loaded(episode, others)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Loaded(null, emptyList())
+                Loaded(null, emptyList(), e.message ?: e::class.simpleName)
             }
         }
     }
@@ -111,7 +125,7 @@ class EpisodeViewModel(
         loaded, library.overlay(), library.progress(ref), library.isBookmarked(LibraryKeys.bookmark(ref)),
     ) { l, overlay, progress, bookmarked ->
         if (l == null) EpisodeUiState() else EpisodeUiState(
-            loaded = true, episode = l.episode, failed = l.episode == null, progress = progress, bookmarked = bookmarked,
+            loaded = true, episode = l.episode, failed = l.episode == null, error = l.error, progress = progress, bookmarked = bookmarked,
             moreEpisodes = l.others.map { overlay.decorate(it) },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), EpisodeUiState())
@@ -127,7 +141,7 @@ fun EpisodeScreen(ref: EpisodeRef) {
     val container = LocalAppContainer.current
     val vm: EpisodeViewModel = viewModel(key = "episode-${ref.source}-${ref.key}", factory = ViewModelFactory(container, episodeRef = ref))
     val state by vm.state.collectAsStateWithLifecycle()
-    EpisodeContent(state, "episode-${ref.source}-${ref.key}", vm::toggleBookmark)
+    EpisodeContent(state, "episode-${ref.source}-${ref.key}", vm::toggleBookmark, vm::retry)
 }
 
 private const val KeyPlay = "hero:play"
@@ -137,7 +151,7 @@ private const val KeyShow = "hero:show"
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun EpisodeContent(state: EpisodeUiState, focusId: String, onToggleBookmark: () -> Unit) {
+fun EpisodeContent(state: EpisodeUiState, focusId: String, onToggleBookmark: () -> Unit, onRetry: () -> Unit = {}) {
     val episode = state.episode
     val actions = LocalTileActions.current
     val progress = state.progress
@@ -154,7 +168,7 @@ fun EpisodeContent(state: EpisodeUiState, focusId: String, onToggleBookmark: () 
     val listState = rememberLazyListState()
     InitialFocusEffect(sf, listState)
     if (state.loaded && episode == null) {
-        Text(stringResource(R.string.error_load), style = QType.body, color = QColors.Muted, modifier = Modifier.padding(start = 24.dp, top = 80.dp))
+        LoadError(state.error, onRetry)
         return
     }
     if (episode == null) return
@@ -248,5 +262,5 @@ private fun EpisodePreview() {
             FakeData.episodesByShow.getValue("abgruende").filter { it.ref != ep.ref }.map { overlay.decorate(it) },
         )
     }
-    PreviewHost { EpisodeContent(state, "preview") {} }
+    PreviewHost { EpisodeContent(state, "preview", onToggleBookmark = {}) }
 }

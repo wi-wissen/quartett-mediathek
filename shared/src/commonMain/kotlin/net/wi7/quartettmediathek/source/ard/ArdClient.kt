@@ -93,6 +93,32 @@ class ArdClient(
         return ArdGrouping(show, episodes)
     }
 
+    /** A single episode from its item page, e.g. after an app restart when no show page was loaded. */
+    suspend fun episode(ref: EpisodeRef): Episode {
+        val root = parseJson(http.fetchText("$baseUrl/pages/ard/item/${ref.key}?devicetype=pc&embedded=true"), "ARD item")
+        return parseItemEpisode(root, ref)
+    }
+
+    internal fun parseItemEpisode(root: JsonElement, ref: EpisodeRef): Episode {
+        val w = root["widgets"].list.firstOrNull { it["mediaCollection"] != null } ?: root["widgets"].list.firstOrNull()
+            ?: throw SourceException("ARD item ${ref.key} is empty")
+        val title = w["title"].nonBlank ?: root["title"].nonBlank ?: throw SourceException("ARD item ${ref.key} has no title")
+        val show = w["show"]
+        return Episode(
+            ref = ref,
+            showRef = show["id"].nonBlank?.let { ShowRef(SourceId.ARD, it) },
+            showTitle = show["title"].nonBlank?.let(::cleanArdShowTitle) ?: "",
+            title = title,
+            broadcaster = Broadcaster.ARD,
+            channelLabel = w.path("publicationService", "name").nonBlank ?: "ARD",
+            description = w["synopsis"].nonBlank,
+            imageUrl = image(w["image"]["src"].string),
+            durationSeconds = w.path("mediaCollection", "embedded", "meta", "durationSeconds").int ?: 0,
+            publishedAt = parseInstantOrNull(w["broadcastedOn"].string) ?: Instant.fromEpochSeconds(0),
+            availableUntil = parseInstantOrNull(w["availableTo"].string),
+        )
+    }
+
     /** 16:9 picture of an item page (`widgets[].image.src`), or null. */
     suspend fun itemImage(itemId: String): String? {
         val root = parseJson(http.fetchText("$baseUrl/pages/ard/item/$itemId?devicetype=pc&embedded=true"), "ARD item")

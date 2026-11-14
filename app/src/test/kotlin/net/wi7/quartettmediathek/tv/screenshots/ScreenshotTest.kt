@@ -184,7 +184,8 @@ class GermanScreenshots : ScreenshotTest("de") {
                 FakeData.episodesByShow.getValue("abgruende").filter { it.ref != ep.ref }.map { overlay.decorate(it) },
             ),
             "screenshot",
-        ) {}
+            onToggleBookmark = {},
+        )
     }
 }
 
@@ -200,6 +201,7 @@ class EnglishScreenshots : ScreenshotTest("en") {
         EpisodeContent(
             EpisodeUiState(true, ep, false, Progress(ep, 2210, false, FakeData.now), true, emptyList()),
             "screenshot",
-        ) {}
+            onToggleBookmark = {},
+        )
     }
 }
