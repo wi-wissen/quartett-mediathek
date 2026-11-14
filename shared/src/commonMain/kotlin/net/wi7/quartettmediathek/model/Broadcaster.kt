@@ -1,5 +1,7 @@
 package net.wi7.quartettmediathek.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * The four public broadcasters the app covers.
  *
@@ -7,6 +9,7 @@ package net.wi7.quartettmediathek.model
  * (lower case, as returned in `channel`). ARD includes its regional programmes, ZDF includes ZDFneo/ZDFinfo.
  * Anything else in MediathekViewWeb (e.g. SRF, ORF, KiKA, DW) is out of scope and must be filtered out.
  */
+@Serializable
 enum class Broadcaster(val displayName: String, val mvwChannels: Set<String>) {
     ARD(
         "ARD",

@@ -1,7 +1,20 @@
 package net.wi7.quartettmediathek.model
 
 import kotlin.time.Instant
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
+/** Stores an [Instant] as epoch milliseconds (used for cached catalog data and library snapshots). */
+object EpochMillisInstantSerializer : KSerializer<Instant> {
+    override val descriptor = PrimitiveSerialDescriptor("EpochMillisInstant", PrimitiveKind.LONG)
+    override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeLong(value.toEpochMilliseconds())
+    override fun deserialize(decoder: Decoder): Instant = Instant.fromEpochMilliseconds(decoder.decodeLong())
+}
 
 /**
  * Identifies a show at its origin. [source] tells which client can load it; [key] is the source-specific id
@@ -21,6 +34,7 @@ enum class SourceId { ARD, ZDF, ARTE, MVW }
 @Serializable
 enum class Variant { STANDARD, AUDIO_DESCRIPTION, SIGN_LANGUAGE, ORIGINAL_VERSION }
 
+@Serializable
 data class Show(
     val ref: ShowRef,
     val title: String,
@@ -33,6 +47,7 @@ data class Show(
     val episodeCount: Int? = null,
 )
 
+@Serializable
 data class Episode(
     val ref: EpisodeRef,
     val showRef: ShowRef?,
@@ -43,7 +58,9 @@ data class Episode(
     val description: String?,
     val imageUrl: String?,
     val durationSeconds: Int,
+    @Serializable(with = EpochMillisInstantSerializer::class)
     val publishedAt: Instant,
+    @Serializable(with = EpochMillisInstantSerializer::class)
     val availableUntil: Instant? = null,
     val season: Int? = null,
     val episodeNumber: Int? = null,
@@ -55,24 +72,33 @@ data class Episode(
 )
 
 /** Something a row on Home/Discover can show: either a whole show or a single episode. */
+@Serializable
 sealed interface Teaser {
+    @Serializable @SerialName("show")
     data class OfShow(val show: Show) : Teaser
+    @Serializable @SerialName("episode")
     data class OfEpisode(val episode: Episode) : Teaser
 }
 
 /** Unified Discover categories (concept: "Entdecken"). Unknown broadcaster rows fall into [HIGHLIGHTS]. */
+@Serializable
 enum class DiscoverCategory { HIGHLIGHTS, SERIES, DOCUMENTARIES, KNOWLEDGE_CULTURE, MOVIES }
 
 /** An editorial row as delivered by a broadcaster's start page, before mapping to [DiscoverCategory]. */
+@Serializable
 data class SourceRow(val broadcaster: Broadcaster, val title: String, val items: List<Teaser>)
 
+@Serializable
 data class DiscoverRow(val category: DiscoverCategory, val items: List<Teaser>)
 
+@Serializable
 data class SubtitleTrack(val url: String, val format: SubtitleFormat, val language: String?)
 
+@Serializable
 enum class SubtitleFormat { WEBVTT, EBU_TT, TTML }
 
 /** A playable stream resolved right before playback (stream URLs may expire, never cache them long). */
+@Serializable
 data class StreamInfo(
     val url: String,
     val mimeType: String,

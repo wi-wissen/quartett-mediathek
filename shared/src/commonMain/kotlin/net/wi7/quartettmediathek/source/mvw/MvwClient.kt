@@ -39,14 +39,15 @@ class MvwClient(
     private val http: HttpClient,
     private val baseUrl: String = "https://mediathekviewweb.de",
 ) {
-    suspend fun query(query: MvwQuery): MvwResult {
-        val text = http.fetchText("$baseUrl/api/query") {
+    suspend fun query(query: MvwQuery): MvwResult = parseResult(parseJson(queryRaw(query), "MVW response"))
+
+    /** The raw JSON response, e.g. to store it in the cache. */
+    suspend fun queryRaw(query: MvwQuery): String =
+        http.fetchText("$baseUrl/api/query") {
             method = HttpMethod.Post
             contentType(ContentType.Text.Plain)
             setBody(query.toJson())
         }
-        return parseResult(parseJson(text, "MVW response"))
-    }
 
     internal fun parseResult(root: JsonElement): MvwResult {
         val result = root["result"] ?: throw SourceException("MVW answered without result: ${root["err"]}")
