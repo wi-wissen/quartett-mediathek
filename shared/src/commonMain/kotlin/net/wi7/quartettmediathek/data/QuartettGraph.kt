@@ -59,6 +59,9 @@ class QuartettGraph(
 
     val settings: SettingsRepository = SqlSettingsRepository(db)
 
+    /** Raw MediathekViewWeb title of the file behind [ref] (tests check which version would play). */
+    internal suspend fun rawMvwTitle(ref: net.wi7.quartettmediathek.model.EpisodeRef): String? = index.mvwEntry(ref.key)?.title
+
     init {
         // Keep the content cache bounded (entries unused for 90 days, at most 20 000 items).
         scope.launch { runCatching { index.prune() } }

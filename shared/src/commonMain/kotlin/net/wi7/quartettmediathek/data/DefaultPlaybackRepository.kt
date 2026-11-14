@@ -1,6 +1,7 @@
 package net.wi7.quartettmediathek.data
 
 import kotlinx.coroutines.CancellationException
+import net.wi7.quartettmediathek.feed.TitleParser
 import net.wi7.quartettmediathek.model.EpisodeRef
 import net.wi7.quartettmediathek.model.SourceId
 import net.wi7.quartettmediathek.model.StreamInfo
@@ -39,17 +40,23 @@ class DefaultPlaybackRepository(
         SourceId.MVW -> mvwStream(ref)
     }
 
+    /**
+     * MediathekViewWeb offers at most 720p MP4. For the standard version of an ARD or ZDF episode the broadcaster's own
+     * API is asked first (up to 1080p, WebVTT subtitles); the MP4 from MediathekViewWeb is the fallback.
+     */
     private suspend fun mvwStream(ref: EpisodeRef): StreamInfo {
         val entry = index.mvwEntry(ref.key) ?: refetch(ref)
-        val isStandard = catalog.episode(ref).variants.contains(Variant.STANDARD)
-        val ardId = entry.ardItemId
-        if (ardId != null && isStandard) {
-            try {
-                return ard.resolve(EpisodeRef(SourceId.ARD, ardId))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // fall back to the MP4 from MediathekViewWeb
+        if (TitleParser.parse(entry.title).variant == Variant.STANDARD) {
+            val direct = entry.ardItemId?.let { EpisodeRef(SourceId.ARD, it) }
+                ?: (entry.urlWebsite?.let(::classifyEpisodePage) as? ImageStrategy.Zdf)?.let { EpisodeRef(SourceId.ZDF, it.canonical) }
+            if (direct != null) {
+                try {
+                    return if (direct.source == SourceId.ARD) ard.resolve(direct) else zdf.resolve(direct)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // fall back to the MP4 from MediathekViewWeb
+                }
             }
         }
         return entry.toStreamInfo() ?: throw SourceException("No stream for ${ref.key}")

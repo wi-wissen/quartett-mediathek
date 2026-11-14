@@ -88,7 +88,12 @@ class LiveBackendTest {
         log("feed '${show.title}': ${feed.size} entries, ${feed.count { it.imageUrl != null }} with image")
         assertStandardFirst(feed, "feed '${show.title}'")
         assertTrue(feed.count { it.imageUrl != null } * 10 >= feed.take(40).size * 8, "fewer than 80 % of feed episodes have an image")
-        app.restart().openAndPlay(feed.take(3), "feed '${show.title}'")
+        val restarted = app.restart()
+        restarted.openAndPlay(feed.take(3), "feed '${show.title}'")
+        // ZDF episodes found via MediathekViewWeb must play in the broadcaster's best quality, not MVW's 720p.
+        val height = restarted.graph.playback.stream(feed.first().ref).height ?: 0
+        log("feed '${show.title}' first stream: ${height}p")
+        assertTrue(height >= 1080, "feed '${show.title}' plays only ${height}p")
     }
 
     @Test
@@ -118,6 +123,11 @@ class LiveBackendTest {
             for (e in episodes) {
                 val opened = runCatching { graph.catalog.episode(e.ref) }
                     .getOrElse { fail("$where: episode '${e.title}' (${e.ref}) does not open after restart: ${it.message}") }
+                if (opened.ref.source == SourceId.MVW && Variant.STANDARD in opened.variants) {
+                    val raw = graph.rawMvwTitle(opened.ref) ?: fail("$where: raw MVW hit for '${e.title}' missing")
+                    val variant = TitleParser.parse(raw).variant
+                    assertTrue(variant == Variant.STANDARD, "$where: '${e.title}' would play the $variant file ('$raw') although a standard version exists")
+                }
                 val stream = runCatching { graph.playback.stream(opened.ref) }
                     .getOrElse { fail("$where: no stream for '${e.title}' (${e.ref}): ${it.message}") }
                 assertPlayable(stream, "$where '${e.title}'")

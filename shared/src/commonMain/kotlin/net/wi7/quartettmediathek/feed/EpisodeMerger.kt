@@ -81,6 +81,9 @@ object EpisodeMerger {
         val sa = a.sizeBytes
         val sb = b.sizeBytes
         if (sa == null || sb == null || sa != sb) return false
+        // MediathekViewWeb reports the same size for all versions of an episode (standard, audio description,
+        // English). Different versions are never the same broadcast; mergeVariants() groups them instead.
+        if (TitleParser.parse(a.episode.title).variant != TitleParser.parse(b.episode.title).variant) return false
         return abs(a.episode.publishedAt.toEpochMilliseconds() - b.episode.publishedAt.toEpochMilliseconds()) <= TIME_TOLERANCE_MS &&
             abs(a.episode.durationSeconds - b.episode.durationSeconds) <= DURATION_TOLERANCE_S
     }

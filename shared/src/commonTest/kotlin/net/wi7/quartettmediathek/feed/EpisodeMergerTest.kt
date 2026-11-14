@@ -97,4 +97,21 @@ class EpisodeMergerTest {
         assertEquals("Die Anstalt", m.title)
         assertNull(EpisodeMerger.merge(listOf(anstaltZdf)).single().episode.season)
     }
+
+    @Test
+    fun versionsWithEqualSizeAreNotDuplicatesAndStandardWins() {
+        // Real case "Die Ringe der Macht": MVW reports the same size for all three files of an episode.
+        val show = "Der Herr der Ringe: Die Ringe der Macht"
+        val at = "2026-10-30T07:00:00Z"
+        val list = listOf(
+            candidate("ad", show, "Schatten und Flammen (S02/E08) (Audiodeskription)", Broadcaster.ZDF, at, 67, "https://cdn/a5a6.mp4", 942_000_000),
+            candidate("en", show, "Schatten und Flammen (S02/E08) (Englisch)", Broadcaster.ZDF, at, 67, "https://cdn/a3a4.mp4", 942_000_000),
+            candidate("de", show, "Schatten und Flammen (S02/E08)", Broadcaster.ZDF, at, 67, "https://cdn/a1a2.mp4", 942_000_000),
+        )
+        val merged = EpisodeMerger.merge(list)
+        assertEquals(1, merged.size)
+        assertEquals("de", merged.single().episode.ref.key)
+        assertEquals("Schatten und Flammen", merged.single().episode.title)
+        assertEquals(setOf(Variant.STANDARD, Variant.AUDIO_DESCRIPTION, Variant.ORIGINAL_VERSION), merged.single().episode.variants)
+    }
 }
