@@ -47,4 +47,8 @@ internal object ZdfQueries {
     val VIDEO_BY_CANONICAL = """
         query(${'$'}c: String!) { videoByCanonical(canonical: ${'$'}c) { $VIDEO } }
     """.trimIndent()
+
+    val VIDEO_IMAGE = """
+        query(${'$'}c: String!) { videoByCanonical(canonical: ${'$'}c) { teaser { $IMAGE } } }
+    """.trimIndent()
 }

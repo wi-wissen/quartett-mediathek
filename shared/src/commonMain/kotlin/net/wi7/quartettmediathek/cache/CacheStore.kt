@@ -3,6 +3,7 @@ package net.wi7.quartettmediathek.cache
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,12 @@ data class CachePolicy(val maxAge: Duration) {
         /** Start pages and subscription feeds: once per day (docs/SPEC.md "Cache"). */
         val START_PAGE = CachePolicy(24.hours)
         val FEED = CachePolicy(24.hours)
+
+        /** Resolved episode thumbnails, also "no image": broadcasters rarely change them. */
+        val IMAGE = CachePolicy(30.days)
+
+        /** Failed thumbnail lookups (network, parse): retry after an hour. */
+        val IMAGE_RETRY = CachePolicy(1.hours)
     }
 }
 
