@@ -61,10 +61,11 @@ fun UpdatedLabel.label(): String = when (this) {
 fun episodeMetaSuffix(episode: Episode, progressSeconds: Long?, now: Instant, playedAt: Instant? = null): String {
     val parts = buildList {
         episode.episodeNumber?.let { add(stringResource(R.string.episode_number, it)) }
-        if (progressSeconds != null) add(stringResource(R.string.minutes_left, minutesLeft(episode.durationSeconds, progressSeconds)))
-        // History tiles show when the episode was played, everywhere else when it was published.
+        // History tiles show when the episode was played (the progress bar already shows what is left), so the
+        // never-truncated part stays short and the show name keeps its room.
         if (playedAt != null) add(ageOf(playedAt, now).label())
-        else if (progressSeconds == null) add(ageOf(episode.publishedAt, now).label())
+        else if (progressSeconds != null) add(stringResource(R.string.minutes_left, minutesLeft(episode.durationSeconds, progressSeconds)))
+        else add(ageOf(episode.publishedAt, now).label())
     }
     return parts.joinToString(" · ")
 }
