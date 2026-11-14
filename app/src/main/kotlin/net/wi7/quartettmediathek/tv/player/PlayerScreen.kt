@@ -282,10 +282,16 @@ private fun PlayerContent(
         }
     }
 
+    // Back first hides the controls (like everywhere else on TV); only Back without controls leaves the video.
     BackHandler {
-        vm.reportPosition(player.currentPosition / 1000, durationSeconds())
-        vm.saveNow()
-        onExit()
+        if (osdVisible) {
+            endSeek()
+            osdVisible = false
+        } else {
+            vm.reportPosition(player.currentPosition / 1000, durationSeconds())
+            vm.saveNow()
+            onExit()
+        }
     }
 
     val osdAlpha by animateFloatAsState(if (osdVisible) 1f else 0f, label = "osd")
@@ -401,6 +407,8 @@ private fun PlayerContent(
             update = { view ->
                 view.player = player
                 view.keepScreenOn = playing
+                // Keep subtitles clear of the TV's overscan edge, and above the controls while they are shown.
+                view.subtitleView?.setBottomPaddingFraction(if (osdVisible) SUBTITLE_PADDING_WITH_OSD else SUBTITLE_PADDING)
             },
         )
         PlayerShade(Modifier.fillMaxSize().graphicsLayer { alpha = osdAlpha })
@@ -440,3 +448,6 @@ private fun subLine(episode: Episode): String {
     }
     return parts.joinToString(" · ")
 }
+
+private const val SUBTITLE_PADDING = 0.12f
+private const val SUBTITLE_PADDING_WITH_OSD = 0.34f

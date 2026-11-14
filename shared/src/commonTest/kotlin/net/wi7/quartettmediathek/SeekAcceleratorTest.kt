@@ -23,9 +23,12 @@ class SeekAcceleratorTest {
     fun holdingAcceleratesSteps() {
         var p = seek.start(1, 0, 0)
         var t = 0L
-        while (t <= 3000) { p = seek.repeat(p, t); t += 60 }
-        // after 3 s the step size must have grown to one minute
+        while (t <= 1100) { p = seek.repeat(p, t); t += 60 }
+        // after about one second the step size is already one minute
         assertEquals(60, p.stepSeconds)
+        while (t <= 2500) { p = seek.repeat(p, t); t += 60 }
+        // after 2.2 s it jumps five minutes per step
+        assertEquals(300, p.stepSeconds)
         assertEquals(true, p.scrubbing)
     }
 }

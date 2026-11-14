@@ -12,9 +12,10 @@ package net.wi7.quartettmediathek.player
 class SeekAccelerator(
     val tapBackSeconds: Int = 10,
     val tapForwardSeconds: Int = 30,
-    val holdThresholdMs: Long = 350,
-    val repeatIntervalMs: Long = 180,
-    val steps: List<Pair<Long, Int>> = listOf(0L to 10, 1200L to 30, 2400L to 60, 3600L to 120, 5000L to 300),
+    val holdThresholdMs: Long = 250,
+    val repeatIntervalMs: Long = 120,
+    // Accelerates quickly: holding usually means "far ahead" (e.g. the end of a film), ~40 min per second after 2.2 s.
+    val steps: List<Pair<Long, Int>> = listOf(0L to 10, 500L to 30, 1000L to 60, 1500L to 120, 2200L to 300),
 ) {
     /** Current state of a press; null while no key is held. */
     data class Press(

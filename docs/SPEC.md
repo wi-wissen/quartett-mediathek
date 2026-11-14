@@ -233,10 +233,12 @@ mockup CSS px / 2 roughly, e.g. 416 px tile = 208.dp).
 - Controls: Play/Pause, Speed (0.75×, 1×, 1.25×, 1.5×, 2×), Subtitles, Watchlist, Next episode. Icons only from
   `res/drawable/ic_*`.
 - The progress bar is focusable. When it is focused **or the controls are hidden**: a short Left/Right press jumps
-  10 s back / 30 s forward; holding scrubs with growing steps 10 s → 30 s (1.2 s) → 1 min (2.4 s) → 2 min (3.6 s)
-  → 5 min (5 s); a marker and label show the target ("+7:20 · 1 min"); the jump happens on release.
+  10 s back / 30 s forward; holding scrubs with growing steps 10 s → 30 s (0.5 s) → 1 min (1 s) → 2 min (1.5 s)
+  → 5 min (2.2 s), one step every 120 ms; a marker and label show the target ("+7:20 · 1 min"); the jump happens on release.
   Logic: `shared/.../player/SeekAccelerator.kt`.
 - OK while controls are hidden = play/pause and show controls (never trigger a hidden button).
+- Back while controls are shown hides them; Back without controls leaves the player.
+- Subtitles sit 12 % above the bottom edge (TV overscan) and move above the controls while those are shown.
 - Controls hide after 4 s while playing. Progress is saved on exit (≥95 % = watched).
 
 ## 6. Assets
