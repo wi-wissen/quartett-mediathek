@@ -22,6 +22,10 @@ export ANDROID_HOME=/home/user/android-sdk
 ./gradlew :shared:jvmTest            # fast logic tests
 ./gradlew :app:assembleDebug         # TV app
 ./gradlew :shared:jvmTest :app:assembleDebug :app:lintDebug
+./gradlew :app:recordRoborazziDebug   # re-record screenshots after an intended UI change
+./gradlew :app:verifyRoborazziDebug   # compare against app/src/test/screenshots (also runs in CI)
 ```
+Screenshot tests live in `app/src/test/.../screenshots/ScreenshotTest.kt` (Roborazzi + Robolectric, 1920×1080 TV frame,
+German and English). Look at the images after UI work; they replace a device for layout checks.
 `local.properties` points to the SDK (not committed). In this container Maven Central is mirrored through
 `~/.gradle/init.d/maven-mirror.gradle` (rate limits); do not add mirror URLs to the repository.

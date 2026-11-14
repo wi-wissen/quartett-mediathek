@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -203,7 +204,8 @@ fun EpisodeContent(state: EpisodeUiState, focusId: String, onToggleBookmark: () 
                         style = QType.rowSmall.copy(fontSize = 10.5.sp), color = QColors.Muted, modifier = Modifier.padding(top = 5.dp, bottom = 13.dp),
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                // Buttons never wrap or truncate: the row may grow past the hero's text width.
+                Row(Modifier.wrapContentWidth(align = Alignment.Start, unbounded = true), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     QButton(
                         text = if (position != null) stringResource(R.string.action_resume_at, net.wi7.quartettmediathek.tv.ui.formatClock(position)) else stringResource(R.string.action_play),
                         onClick = { actions.play(episode.ref, null) }, modifier = Modifier.tracked(sf, KeyPlay),

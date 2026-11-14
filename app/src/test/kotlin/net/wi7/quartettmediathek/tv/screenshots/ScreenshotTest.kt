@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -17,6 +18,7 @@ import net.wi7.quartettmediathek.tv.navigation.RailWidth
 import net.wi7.quartettmediathek.tv.navigation.Routes
 import net.wi7.quartettmediathek.tv.navigation.TopFade
 import net.wi7.quartettmediathek.tv.ui.LibraryOverlay
+import net.wi7.quartettmediathek.tv.ui.LocalFixedNow
 import net.wi7.quartettmediathek.tv.ui.screens.AppHeader
 import net.wi7.quartettmediathek.tv.ui.screens.AppRail
 import net.wi7.quartettmediathek.tv.ui.screens.AvatarState
@@ -60,26 +62,27 @@ abstract class ScreenshotTest(private val locale: String) {
 
     protected fun snap(name: String, activeRoute: String?, content: @Composable () -> Unit) =
         captureRoboImage("src/test/screenshots/${locale}_$name.png") {
-            QuartettTheme {
-                Box(Modifier.fillMaxSize().background(QColors.Background)) {
-                    Box(Modifier.fillMaxSize().padding(start = RailWidth)) { content() }
-                    TopFade()
-                    AppHeader(
-                        ShellUiState(updated = FakeData.now - 13.hours),
-                        onRefresh = {},
-                        modifier = Modifier.align(Alignment.TopEnd),
-                        now = FakeData.now,
-                    )
-                    AppRail(
-                        activeRoute = activeRoute,
-                        requesters = TOP_LEVEL.associateWith { FocusRequester() },
-                        contentEntry = FocusRequester(),
-                        onNavigate = {},
-                        onFocusChange = {},
-                    )
+            CompositionLocalProvider(LocalFixedNow provides FakeData.now) {
+                QuartettTheme {
+                    Box(Modifier.fillMaxSize().background(QColors.Background)) {
+                        Box(Modifier.fillMaxSize().padding(start = RailWidth)) { content() }
+                        TopFade()
+                        AppHeader(
+                            ShellUiState(updated = FakeData.now - 13.hours),
+                            onRefresh = {},
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        )
+                        AppRail(
+                            activeRoute = activeRoute,
+                            requesters = TOP_LEVEL.associateWith { FocusRequester() },
+                            contentEntry = FocusRequester(),
+                            onNavigate = {},
+                            onFocusChange = {},
+                        )
+                    }
                 }
             }
-    }
+        }
 
     companion object {
         val TOP_LEVEL = listOf(Routes.HOME, Routes.DISCOVER, Routes.SEARCH, Routes.SUBSCRIPTIONS, Routes.BOOKMARKS, Routes.SETTINGS)

@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -66,9 +67,13 @@ fun episodeMetaSuffix(episode: Episode, progressSeconds: Long?, now: Instant): S
     return parts.joinToString(" · ")
 }
 
+/** Overrides [rememberNow] with a fixed time (previews and screenshot tests). Null = real clock. */
+val LocalFixedNow = staticCompositionLocalOf<Instant?> { null }
+
 /** Current time, refreshed every 30 seconds. */
 @Composable
 fun rememberNow(): Instant {
+    LocalFixedNow.current?.let { return it }
     var now by remember { mutableStateOf(Clock.System.now()) }
     LaunchedEffect(Unit) {
         while (true) {

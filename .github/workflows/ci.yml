@@ -17,3 +17,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Tests and debug build
         run: ./gradlew --console=plain :shared:jvmTest :app:assembleDebug
+      - name: Unit and screenshot tests (compares against app/src/test/screenshots)
+        run: ./gradlew --console=plain :app:verifyRoborazziDebug
+      - name: Upload screenshot diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-diffs
+          path: app/build/outputs/roborazzi
