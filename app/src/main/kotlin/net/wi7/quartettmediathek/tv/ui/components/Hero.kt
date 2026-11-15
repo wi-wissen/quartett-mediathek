@@ -5,6 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -29,7 +33,10 @@ import net.wi7.quartettmediathek.tv.ui.theme.QColors
 import net.wi7.quartettmediathek.tv.ui.theme.QType
 import net.wi7.quartettmediathek.tv.ui.theme.color
 
-/** Full-width image area with a left and bottom scrim; [content] sits at the bottom left. */
+/**
+ * Full-bleed backdrop (reaches the top edge, behind the header) anchored to the right. A smooth horizontal scrim from the
+ * page background on the left keeps [content] readable; the bottom fades into the page background where the rows start.
+ */
 @Composable
 fun Hero(
     height: Dp,
@@ -41,19 +48,27 @@ fun Hero(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val bg = QColors.Background
+    val header = LocalHeaderState.current
+    // The shell then draws a light top shade instead of the opaque top fade, so the image stays visible under the header.
+    DisposableEffect(header) {
+        header.overImage = true
+        onDispose { header.overImage = false }
+    }
     Box(modifier.fillMaxWidth().height(height)) {
-        Artwork(imageUrl, artTitle, Modifier.fillMaxSize(), seed = seed)
-        Box(
-            Modifier.fillMaxSize().background(
-                Brush.horizontalGradient(
-                    0f to bg.copy(alpha = 0.96f), 0.45f to bg.copy(alpha = 0.75f), 0.8f to bg.copy(alpha = 0.1f), 1f to Color.Transparent,
-                ),
-            ),
-        )
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Transparent, 0.6f to Color.Transparent, 1f to bg)))
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            Artwork(imageUrl, artTitle, Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(maxWidth * 0.88f), seed = seed)
+        }
+        Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(*HeroScrimStops.map { it.first to bg.copy(alpha = it.second) }.toTypedArray())))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(*HeroBottomStops.map { it.first to bg.copy(alpha = it.second) }.toTypedArray())))
         Column(Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 28.dp).widthIn(max = contentWidth), content = content)
     }
 }
+
+/** Left-to-right scrim: (position, background alpha). Eased so no edge is visible; transparent from ~62 % width. */
+internal val HeroScrimStops = listOf(0f to 1f, 0.12f to 0.97f, 0.25f to 0.88f, 0.38f to 0.68f, 0.5f to 0.42f, 0.62f to 0.15f, 0.75f to 0.03f, 1f to 0f)
+
+/** Top-to-bottom fade into the page background (alpha), starting at mid height. */
+internal val HeroBottomStops = listOf(0f to 0f, 0.5f to 0f, 0.65f to 0.2f, 0.8f to 0.55f, 0.92f to 0.9f, 1f to 1f)
 
 /** "[ARD] NDR · Genre · 5 episodes" line above the hero title. */
 @Composable

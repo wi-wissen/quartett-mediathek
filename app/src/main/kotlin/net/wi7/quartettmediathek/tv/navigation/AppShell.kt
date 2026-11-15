@@ -233,7 +233,7 @@ internal fun ShellHeader(
         exit = fadeOut(tween(160)) + slideOutVertically(tween(160)) { -it / 2 },
     ) {
         Box(Modifier.fillMaxWidth()) {
-            TopFade()
+            if (LocalHeaderState.current.overImage) TopShade() else TopFade()
             AppHeader(state, onRefresh = onRefresh, modifier = Modifier.align(Alignment.TopEnd))
         }
     }
@@ -245,5 +245,14 @@ internal fun TopFade() {
     Box(
         Modifier.fillMaxWidth().height(56.dp)
             .background(Brush.verticalGradient(0f to bg, 0.62f to bg, 1f to Color.Transparent)),
+    )
+}
+
+/** Light dark gradient at the very top for pages whose hero image runs behind the header; keeps the pills readable. */
+@Composable
+internal fun TopShade() {
+    Box(
+        Modifier.fillMaxWidth().height(72.dp)
+            .background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.5f), 0.5f to Color.Black.copy(alpha = 0.2f), 1f to Color.Transparent)),
     )
 }
