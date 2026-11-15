@@ -96,6 +96,27 @@ class LiveBackendTest {
     }
 
     @Test
+    fun zdfAndArdEpisodesOfferSeveralQualities() = live { app ->
+        val shows = app.discover().flatMap { it.items }.filterIsInstance<Teaser.OfShow>().map { it.show }
+        for (source in listOf(SourceId.ZDF, SourceId.ARD)) {
+            val show = shows.firstOrNull { it.ref.source == source } ?: fail("no show from $source on the start page")
+            val episodes = app.graph.catalog.episodes(show.ref).take(3)
+            val streams = episodes.map { e -> e to runCatching { app.graph.playback.stream(e.ref) }.getOrNull() }
+            val (episode, stream) = streams.firstOrNull { (it.second?.alternatives?.size ?: 0) >= 2 }
+                ?.let { it.first to it.second!! }
+                ?: fail("$source '${show.title}': none of ${episodes.size} episodes resolves with >= 2 alternatives: " +
+                    streams.joinToString { "${it.second?.mimeType}/${it.second?.alternatives?.map { a -> a.height }}" })
+            val heights = stream.alternatives.map { it.height }
+            log("qualities $source '${episode.title}': $heights, chosen ${stream.height}p")
+            assertEquals(heights.sortedDescending(), heights, "$source: alternatives not best first")
+            assertEquals(heights.distinct(), heights, "$source: duplicate heights")
+            assertEquals(stream.url, stream.alternatives.first().url, "$source: best alternative is not the chosen stream")
+            val lowest = stream.alternatives.last()
+            assertPlayable(stream.copy(url = lowest.url, mimeType = lowest.mimeType), "$source lowest quality ${lowest.height}p '${episode.title}'")
+        }
+    }
+
+    @Test
     fun subscriptionFeedOpensAndPlaysAfterRestart() = live { searchApp ->
         val show = searchApp.graph.catalog.search("die anstalt").filterIsInstance<Teaser.OfShow>().first().show
         // Fresh database: nothing from the search may help, like a feed loaded days later.

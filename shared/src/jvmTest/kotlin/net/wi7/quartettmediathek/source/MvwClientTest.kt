@@ -84,6 +84,17 @@ class MvwClientTest {
     }
 
     @Test
+    fun mp4StreamListsAllQualitiesBestFirst() = runTest {
+        val entry = client("mvw_friesen.json").query(MvwQuery(emptyList())).entries.first()
+        val stream = entry.toStreamInfo()!!
+        assertEquals(listOf(720, 540, 360).take(stream.alternatives.size), stream.alternatives.map { it.height }.sortedDescending())
+        assertEquals(listOf(entry.urlVideoHd, entry.urlVideo, entry.urlVideoLow), stream.alternatives.map { it.url })
+        assertEquals(stream.url, stream.alternatives.first().url)
+        val onlyLow = entry.copy(urlVideoHd = null, urlVideo = null).toStreamInfo()!!
+        assertTrue(onlyLow.alternatives.size == 1)
+    }
+
+    @Test
     fun errorsBecomeSourceException() = runTest {
         val c = MvwClient(mockClient { Reply("""{"err":["bad"]}""") })
         val failure = runCatching { c.query(MvwQuery(emptyList())) }.exceptionOrNull()

@@ -22,6 +22,8 @@ import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.model.SourceId
 import net.wi7.quartettmediathek.model.SourceRow
 import net.wi7.quartettmediathek.model.StreamInfo
+import net.wi7.quartettmediathek.model.StreamVariant
+import net.wi7.quartettmediathek.model.distinctByHeightDesc
 import net.wi7.quartettmediathek.model.SubtitleFormat
 import net.wi7.quartettmediathek.model.SubtitleTrack
 import net.wi7.quartettmediathek.model.Teaser
@@ -212,6 +214,11 @@ class ZdfClient(
             height = best.height.takeIf { it > 0 },
             subtitles = parseCaptions(root["captions"]),
             audioTracks = audio,
+            // Only progressive MP4 can be swapped by URL; HLS and WebM stay on the automatic choice.
+            alternatives = if (best.mime == "video/mp4") {
+                candidates.filter { it.mime == "video/mp4" }.map { StreamVariant(it.height, it.url, it.mime) }
+                    .distinctByHeightDesc()
+            } else emptyList(),
         )
     }
 

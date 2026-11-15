@@ -11,6 +11,11 @@ import net.wi7.quartettmediathek.model.Variant
  */
 data class VersionOption(val variant: Variant, val ref: EpisodeRef, val audioTrack: Boolean = false)
 
+/** One entry of the quality chooser; a null [height] is "automatic" (best file, or adaptive streaming). */
+data class QualityOption(val height: Int?) {
+    val isAuto get() = height == null
+}
+
 /** Pure player state logic (no Android dependencies, unit tested). */
 object PlayerLogic {
     const val OSD_TIMEOUT_MS = 4000L
@@ -107,4 +112,37 @@ object PlayerLogic {
         versionRefs.entries.firstOrNull { it.value == playedRef }?.key
             ?: if (requested == Variant.AUDIO_DESCRIPTION && "ad" in stream.audioTracks) Variant.AUDIO_DESCRIPTION else Variant.STANDARD
 
+
+    /**
+     * Quality chooser entries: Automatic plus every resolution, best first. Progressive files come from
+     * [StreamInfo.alternatives]; for adaptive streams (HLS) [trackHeights] are the video tracks ExoPlayer reports.
+     * Fewer than two resolutions means nothing to choose, so the list is empty (button hidden).
+     */
+    fun qualityOptions(stream: StreamInfo, trackHeights: List<Int>): List<QualityOption> {
+        val heights = if (stream.alternatives.size >= 2) stream.alternatives.map { it.height } else trackHeights
+        val distinct = heights.filter { it > 0 }.distinct().sortedDescending()
+        return if (distinct.size < 2) emptyList() else listOf(QualityOption(null)) + distinct.map { QualityOption(it) }
+    }
+
+    /**
+     * The option that applies for the remembered wish [preferredHeight] (null = automatic): the exact height, else the
+     * best one below it, else the lowest one. Without a wish, or without options, automatic.
+     */
+    fun selectedQuality(options: List<QualityOption>, preferredHeight: Int?): QualityOption {
+        val auto = QualityOption(null)
+        if (preferredHeight == null || options.isEmpty()) return auto
+        val heights = options.mapNotNull { it.height }.sortedDescending()
+        val pick = heights.firstOrNull { it <= preferredHeight } ?: heights.lastOrNull() ?: return auto
+        return QualityOption(pick)
+    }
+
+    /** File to play for [quality]: the matching progressive file, otherwise the stream's own URL. */
+    fun qualityUrl(stream: StreamInfo, quality: QualityOption): String =
+        stream.alternatives.firstOrNull { it.height == quality.height }?.url ?: stream.url
+
+    /** Resolution to show in the info line. */
+    fun shownHeight(stream: StreamInfo, quality: QualityOption): Int? = quality.height ?: stream.height
+
+    /** Heights of the selectable video tracks, e.g. from ExoPlayer's `Tracks`: best first, no duplicates. */
+    fun distinctHeights(heights: List<Int>): List<Int> = heights.filter { it > 0 }.distinct().sortedDescending()
 }

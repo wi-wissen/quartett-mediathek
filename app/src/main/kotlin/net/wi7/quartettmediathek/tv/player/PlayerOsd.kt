@@ -68,6 +68,9 @@ data class OsdModel(
     /** The version button is only shown when there is more than one version. */
     val versionAvailable: Boolean,
     val versionLabel: String,
+    /** The quality button is only shown when there is more than one resolution. */
+    val qualityAvailable: Boolean,
+    val qualityLabel: String,
     val subtitlesAvailable: Boolean,
     val subtitlesLabel: String,
     val bookmarked: Boolean,
@@ -80,6 +83,7 @@ class OsdActions(
     val onPlayPause: () -> Unit,
     val onSpeed: () -> Unit,
     val onVersion: () -> Unit,
+    val onQuality: () -> Unit,
     val onSubtitles: () -> Unit,
     val onBookmark: () -> Unit,
     val onNext: () -> Unit,
@@ -203,6 +207,7 @@ private fun Buttons(model: OsdModel, actions: OsdActions, playPauseFocus: FocusR
         )
         Spacer(Modifier.weight(1f))
         if (model.versionAvailable) PillButton(R.drawable.ic_translate, model.versionLabel, actions.onVersion)
+        if (model.qualityAvailable) PillButton(R.drawable.ic_hd, model.qualityLabel, actions.onQuality)
         PillButton(R.drawable.ic_speed, model.speedLabel, actions.onSpeed)
         if (model.subtitlesAvailable) {
             PillButton(R.drawable.ic_closed_caption, model.subtitlesLabel, actions.onSubtitles)

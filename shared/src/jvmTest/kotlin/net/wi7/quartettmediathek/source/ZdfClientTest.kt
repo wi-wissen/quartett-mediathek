@@ -103,6 +103,15 @@ class ZdfClientTest {
     }
 
     @Test
+    fun resolveListsMp4AlternativesBestFirst() = runTest {
+        val stream = client().resolve(EpisodeRef(SourceId.ZDF, "symptome-104"))
+        assertEquals(listOf(1080, 720, 540, 360, 270), stream.alternatives.map { it.height })
+        assertTrue(stream.alternatives.all { it.mimeType == "video/mp4" })
+        assertEquals(stream.url, stream.alternatives.first().url)
+        assertEquals(stream.alternatives.size, stream.alternatives.map { it.url }.distinct().size)
+    }
+
+    @Test
     fun refetchesTokenOnceOn403() = runTest {
         val seen = mutableListOf<HttpRequestData>()
         var graphQlCalls = 0

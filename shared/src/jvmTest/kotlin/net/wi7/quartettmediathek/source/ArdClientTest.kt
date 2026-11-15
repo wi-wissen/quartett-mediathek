@@ -80,6 +80,21 @@ class ArdClientTest {
     }
 
     @Test
+    fun resolveListsStandardSoundAlternativesBestFirst() = runTest {
+        val stream = client().resolve(EpisodeRef(SourceId.ARD, "abc"))
+        assertEquals(listOf(1080, 720, 540, 360), stream.alternatives.map { it.height })
+        assertEquals(stream.url, stream.alternatives.first().url)
+        assertTrue(stream.alternatives.all { it.mimeType == "video/mp4" && "sendeton" in it.url })
+        assertTrue(stream.alternatives.last().url.contains("640x360"))
+    }
+
+    @Test
+    fun hlsOnlyHasNoAlternatives() = runTest {
+        val hlsOnly = Fixtures.text("ard_item.json").replace("\"mimeType\":\"video/mp4\"", "\"mimeType\":\"video/x-none\"")
+        assertTrue(client(item = hlsOnly).resolve(EpisodeRef(SourceId.ARD, "abc")).alternatives.isEmpty())
+    }
+
+    @Test
     fun resolveFallsBackToHls() = runTest {
         val hlsOnly = Fixtures.text("ard_item.json").replace("\"mimeType\":\"video/mp4\"", "\"mimeType\":\"video/x-none\"")
         val stream = client(item = hlsOnly).resolve(EpisodeRef(SourceId.ARD, "abc"))
