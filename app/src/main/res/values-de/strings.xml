@@ -88,6 +88,7 @@
     <string name="new_episodes_count">%1$d neue Folgen</string>
     <string name="newest_first">neueste zuerst</string>
     <string name="action_retry">Erneut versuchen</string>
+    <string name="loading">Lädt …</string>
     <string name="error_load">Dieser Inhalt konnte nicht geladen werden.</string>
 
     <string name="row_episodes">Folgen</string>

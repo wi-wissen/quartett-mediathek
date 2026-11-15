@@ -1,5 +1,15 @@
 package net.wi7.quartettmediathek.tv.navigation
 
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.focus.focusProperties
+import net.wi7.quartettmediathek.tv.ui.theme.QType
+import net.wi7.quartettmediathek.tv.R
+import androidx.tv.material3.Text
+import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.focusable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -138,8 +148,8 @@ fun AppShell(startRoute: String) {
                 railDestination(Routes.BOOKMARKS) { WatchlistScreen() }
                 railDestination(Routes.HISTORY) { HistoryScreen() }
                 railDestination(Routes.SETTINGS) { SettingsScreen() }
-                railDestination(Routes.SHOW_PATTERN) { e -> ShowScreen(Routes.showRef(e.arg("source"), e.arg("key"))) }
-                railDestination(Routes.EPISODE_PATTERN) { e -> EpisodeScreen(Routes.episodeRef(e.arg("source"), e.arg("key"))) }
+                railDestination(Routes.SHOW_PATTERN, holdFocusWhileLoading = true) { e -> ShowScreen(Routes.showRef(e.arg("source"), e.arg("key"))) }
+                railDestination(Routes.EPISODE_PATTERN, holdFocusWhileLoading = true) { e -> EpisodeScreen(Routes.episodeRef(e.arg("source"), e.arg("key"))) }
                 playerDestination(
                     onComposed = { playersComposed++ },
                     onDisposed = { playersComposed-- },
@@ -191,8 +201,47 @@ fun AppShell(startRoute: String) {
 internal fun shellChromeVisible(isPlayer: Boolean, playersComposed: Int): Boolean = !isPlayer && playersComposed == 0
 
 /** A destination that sits right of the rail; the padding is part of the destination, so the player never gets it. */
-internal fun NavGraphBuilder.railDestination(route: String, content: @Composable (NavBackStackEntry) -> Unit) {
-    composable(route) { e -> Box(Modifier.fillMaxSize().padding(start = RailWidth)) { content(e) } }
+internal fun NavGraphBuilder.railDestination(
+    route: String,
+    holdFocusWhileLoading: Boolean = false,
+    content: @Composable (NavBackStackEntry) -> Unit,
+) {
+    composable(route) { e ->
+        Box(Modifier.fillMaxSize().padding(start = RailWidth)) {
+            if (holdFocusWhileLoading) LoadingFocusHolder()
+            content(e)
+        }
+    }
+}
+
+/**
+ * Keeps focus inside the content while a detail page loads. Without it, nothing on the new page is focusable yet,
+ * focus falls back to the rail and the rail flies open. The page's own initial focus takes over once it is loaded;
+ * Back leaves the page as usual.
+ */
+internal const val LOADING_FOCUS_TAG = "loading-focus"
+
+@Composable
+private fun LoadingFocusHolder() {
+    val holder = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    // Once the page took focus, the holder steps aside for good so D-pad moves never land on it.
+    var released by remember { mutableStateOf(false) }
+    Box(
+        Modifier.fillMaxSize()
+            .focusRequester(holder)
+            .focusProperties { canFocus = !released }
+            .onFocusChanged {
+                if (focused && !it.isFocused) released = true
+                focused = it.isFocused
+            }
+            .focusable()
+            .testTag(LOADING_FOCUS_TAG),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (focused) Text(stringResource(R.string.loading), style = QType.body, color = QColors.Muted)
+    }
+    LaunchedEffect(Unit) { runCatching { holder.requestFocus() } }
 }
 
 /** The full-screen player destination (no padding). [onComposed]/[onDisposed] report when it enters/leaves composition. */
