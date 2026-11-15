@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.ui.screens
 
+import net.wi7.quartettmediathek.tv.ui.episodeLabel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -175,7 +176,7 @@ private fun ResumeBlock(resume: ResumeInfo, sf: net.wi7.quartettmediathek.tv.ui.
             )
             val meta = buildList {
                 add(episode.showTitle)
-                episode.episodeNumber?.let { add(stringResource(R.string.episode_number, it)) }
+                episodeLabel(episode)?.let { add(it) }
                 add(stringResource(R.string.minutes_left, minutesLeft(episode.durationSeconds, resume.positionSeconds)))
             }.joinToString(" · ")
             Text(meta, style = QType.facts, color = QColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)

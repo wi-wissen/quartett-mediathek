@@ -157,6 +157,26 @@ class LiveBackendTest {
     }
 
     @Test
+    fun seasonsReleasedTogetherAreOrderedBySeasonAndEpisode() = live { app ->
+        // User report: "Ringe der Macht" (2 seasons, all published on the same day) showed "Folge 1, 2, 3" mixed up.
+        val show = app.graph.catalog.search("ringe der macht").filterIsInstance<Teaser.OfShow>()
+            .first { it.show.title.contains("Ringe der Macht", ignoreCase = true) }.show
+        assertSeasonOrder(app.graph.catalog.episodes(show.ref), "show page ${show.ref}")
+        app.graph.library.subscribe(show)
+        val feed = withTimeout(120_000) { app.graph.library.feed().first { it.isNotEmpty() } }
+        assertSeasonOrder(feed.map { it.episode }, "subscription feed")
+    }
+
+    private fun assertSeasonOrder(episodes: List<Episode>, where: String) {
+        val numbered = episodes.filter { it.title.isNotBlank() }
+        log("$where: " + numbered.joinToString { "S${it.season}E${it.episodeNumber} ${it.title}" })
+        assertTrue(numbered.size >= 8, "$where: only ${numbered.size} episodes")
+        assertTrue(numbered.all { it.season != null && it.episodeNumber != null }, "$where: season/episode missing")
+        val keys = numbered.map { it.season!! * 1000 + it.episodeNumber!! }
+        assertEquals(keys.sortedDescending(), keys, "$where: not newest season/episode first")
+    }
+
+    @Test
     fun progressAndHistorySurviveRestart() = live { app ->
         val episode = app.graph.catalog.search("nano").filterIsInstance<Teaser.OfEpisode>().first().episode
         app.graph.library.saveProgress(episode, 600)

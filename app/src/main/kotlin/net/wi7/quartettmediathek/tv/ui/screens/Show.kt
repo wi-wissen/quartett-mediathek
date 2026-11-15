@@ -1,5 +1,7 @@
 package net.wi7.quartettmediathek.tv.ui.screens
 
+import net.wi7.quartettmediathek.feed.EpisodeOrder
+import net.wi7.quartettmediathek.tv.ui.episodeLabel
 import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -116,8 +118,10 @@ class ShowViewModel(
     ) { l, overlay, subscription, bookmarked ->
         if (l == null) ShowUiState() else {
             val tiles = l.episodes.map { overlay.decorate(it) }
+            val watched = tiles.filter { it.watched }.mapNotNull { (it.teaser as? Teaser.OfEpisode)?.episode?.ref }.toSet()
+            val next = EpisodeOrder.nextUp(l.episodes) { it.ref in watched }
             val resume = tiles.firstOrNull { it.progressSeconds != null }
-                ?: tiles.firstOrNull { !it.watched } ?: tiles.firstOrNull()
+                ?: tiles.firstOrNull { (it.teaser as? Teaser.OfEpisode)?.episode?.ref == next?.ref } ?: tiles.firstOrNull()
             ShowUiState(
                 loaded = true, show = l.show, failed = l.failed, error = l.error, episodes = tiles, subscription = subscription, bookmarked = bookmarked,
                 resumeEpisode = (resume?.teaser as? Teaser.OfEpisode)?.episode, resumePosition = resume?.progressSeconds,
@@ -204,8 +208,8 @@ fun ShowContent(
                     if (resume != null) {
                         val label = when {
                             resume.episodeNumber == null -> stringResource(R.string.action_play_duration, formatClock(resume.durationSeconds.toLong()))
-                            state.resumePosition != null -> stringResource(R.string.action_continue_episode, resume.episodeNumber!!)
-                            else -> stringResource(R.string.action_play_episode, resume.episodeNumber!!)
+                            state.resumePosition != null -> stringResource(R.string.action_continue_episode, episodeLabel(resume)!!)
+                            else -> stringResource(R.string.action_play_episode, episodeLabel(resume)!!)
                         }
                         QButton(label, onClick = { actions.play(resume.ref, null) }, modifier = Modifier.tracked(sf, KeyPlay), icon = R.drawable.ic_play_arrow_fill, primary = true)
                     }

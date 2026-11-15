@@ -96,7 +96,7 @@ abstract class ScreenshotTest(private val locale: String) {
                         AppRail(
                             activeRoute = activeRoute,
                             requesters = requesters,
-                            contentEntry = FocusRequester(),
+                            contentEntry = remember { FocusRequester() },
                             onNavigate = {},
                             onFocusChange = {},
                         )

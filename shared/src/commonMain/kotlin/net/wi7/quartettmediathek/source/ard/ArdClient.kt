@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.source.ard
 
+import net.wi7.quartettmediathek.feed.EpisodeOrder
 import io.ktor.client.HttpClient
 import kotlin.time.Instant
 import kotlinx.coroutines.async
@@ -82,7 +83,7 @@ class ArdClient(
             .flatMap { it["teasers"].list }
             .filter { it["type"].string == "ondemand" }
             .mapNotNull { mapEpisode(it, ref) }
-            .sortedByDescending { it.publishedAt }
+            .sortedWith(EpisodeOrder.newestFirst)
         val show = Show(
             ref = ref,
             title = title,

@@ -28,6 +28,6 @@ object FeedBuilder {
                 entries.add(FeedEntry(ep, subscription.id, isNew))
             }
         }
-        return entries.sortedByDescending { it.episode.publishedAt }
+        return entries.sortedWith(compareBy(EpisodeOrder.newestFirst) { it.episode })
     }
 }

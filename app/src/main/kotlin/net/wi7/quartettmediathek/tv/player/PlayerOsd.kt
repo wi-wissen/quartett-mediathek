@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.player
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -165,7 +166,8 @@ private fun ProgressBar(model: OsdModel, actions: OsdActions) {
     BoxWithConstraints(
         Modifier.fillMaxWidth().height(34.dp)
             .onFocusChanged { focused = it.isFocused; actions.onBarFocus(it.isFocused) }
-            .clickable(onClick = actions.onPlayPause),
+            // No default focus indication: the white ring and the bigger knob already show the focus.
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = actions.onPlayPause),
         contentAlignment = Alignment.CenterStart,
     ) {
         val width = maxWidth

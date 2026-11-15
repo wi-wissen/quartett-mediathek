@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.data
 
+import net.wi7.quartettmediathek.feed.EpisodeOrder
 import kotlin.concurrent.Volatile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -62,8 +63,8 @@ class MvwFeedProvider(
     private suspend fun withImages(subscription: Subscription, candidates: List<FeedCandidate>): List<FeedCandidate> {
         val resolver = images ?: return candidates
         val wanted = SubscriptionFilter.filter(subscription, candidates)
-            .sortedByDescending { it.episode.publishedAt }
             .map { it.episode }
+            .sortedWith(EpisodeOrder.newestFirst)
             .take(imageLimit)
         val found = resolver.imagesFor(wanted)
         if (found.isEmpty()) return candidates

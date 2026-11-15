@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.ui
 
+import net.wi7.quartettmediathek.feed.EpisodeOrder
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -7,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import java.time.Instant as JInstant
 import java.time.ZoneId
@@ -35,7 +36,7 @@ fun formatTime(at: Instant): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(currentLocale()).format(at.zoned())
 
 @Composable
-fun currentLocale(): Locale = LocalContext.current.resources.configuration.locales[0]
+fun currentLocale(): Locale = LocalConfiguration.current.locales[0]
 
 @Composable
 fun Age.label(): String = when (this) {
@@ -56,11 +57,20 @@ fun UpdatedLabel.label(): String = when (this) {
     is UpdatedLabel.On -> formatDate(at, FormatStyle.SHORT) + ", " + formatTime(at)
 }
 
+/** "Folge 3", "Staffel 2 · Folge 3" or on tiles ([short]) "S2 F3"; null when the episode has no number. */
+@Composable
+fun episodeLabel(episode: Episode, short: Boolean = false): String? {
+    val number = episode.episodeNumber ?: return null
+    val season = EpisodeOrder.displaySeason(episode)
+        ?: return stringResource(R.string.episode_number, number)
+    return stringResource(if (short) R.string.season_episode_short else R.string.season_episode, season, number)
+}
+
 /** "Episode 5 · yesterday" or "Episode 5 · 12 min left": the part of the meta line that is never truncated. */
 @Composable
 fun episodeMetaSuffix(episode: Episode, progressSeconds: Long?, now: Instant, playedAt: Instant? = null): String {
     val parts = buildList {
-        episode.episodeNumber?.let { add(stringResource(R.string.episode_number, it)) }
+        episodeLabel(episode, short = true)?.let { add(it) }
         // History tiles show when the episode was played (the progress bar already shows what is left), so the
         // never-truncated part stays short and the show name keeps its room.
         if (playedAt != null) add(ageOf(playedAt, now).label())

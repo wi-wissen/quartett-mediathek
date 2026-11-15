@@ -28,6 +28,8 @@
 
     <string name="badge_new">NEU</string>
     <string name="episode_number">Folge %1$d</string>
+    <string name="season_episode">Staffel %1$d · Folge %2$d</string>
+    <string name="season_episode_short">S%1$d F%2$d</string>
     <string name="minutes_left">noch %1$d Min.</string>
 
     <string name="category_highlights">Highlights</string>
@@ -47,7 +49,6 @@
     <string name="player_bookmark">Merken</string>
     <string name="player_bookmarked">Gemerkt</string>
     <string name="player_next">Nächste Folge</string>
-    <string name="player_episode_number">Folge %1$d</string>
     <string name="player_available_until">verfügbar bis %1$s</string>
     <string name="player_step_seconds">%1$d s</string>
     <string name="player_version_button">Ton / Sprache</string>
@@ -60,8 +61,8 @@
     <string name="player_version_failed">Tonfassung nicht verfügbar</string>
     <string name="player_step_minutes">%1$d Min.</string>
     <!-- tv ui -->
-    <string name="action_continue_episode">Weiterschauen · Folge %1$d</string>
-    <string name="action_play_episode">Abspielen · Folge %1$d</string>
+    <string name="action_continue_episode">Weiterschauen · %1$s</string>
+    <string name="action_play_episode">Abspielen · %1$s</string>
     <string name="action_play_duration">Abspielen · %1$s</string>
     <string name="action_done">Fertig</string>
 

@@ -123,7 +123,7 @@ object EpisodeMerger {
             val refs = reps.mapValues { (_, e) -> e.ref }
             val finalReps = reps.mapValues { (_, e) -> e.copy(variants = all, versionRefs = refs) }
             MergedEpisode(pick(finalReps, preferredVariant), finalReps)
-        }.sortedByDescending { it.episode.publishedAt }
+        }.sortedWith(compareBy(EpisodeOrder.newestFirst) { it.episode })
     }
 
     /** The preferred variant if it exists, otherwise standard, otherwise whatever there is. */

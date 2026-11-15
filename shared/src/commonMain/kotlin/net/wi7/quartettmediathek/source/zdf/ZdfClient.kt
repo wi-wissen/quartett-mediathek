@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.source.zdf
 
+import net.wi7.quartettmediathek.feed.EpisodeOrder
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.setBody
@@ -151,11 +152,7 @@ class ZdfClient(
             }
         }
         val show = mapShow(first, ref).copy(episodeCount = episodes.size.takeIf { it > 0 })
-        val sorted = episodes.sortedWith(
-            compareByDescending<Episode> { it.publishedAt }
-                .thenByDescending { it.season ?: 0 }
-                .thenByDescending { it.episodeNumber ?: 0 },
-        )
+        val sorted = episodes.sortedWith(EpisodeOrder.newestFirst)
         return show to sorted
     }
 

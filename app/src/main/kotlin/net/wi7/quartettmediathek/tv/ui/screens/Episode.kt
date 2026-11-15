@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.ui.screens
 
+import net.wi7.quartettmediathek.tv.ui.episodeLabel
 import net.wi7.quartettmediathek.library.LibraryKeys
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -177,7 +178,7 @@ fun EpisodeContent(state: EpisodeUiState, focusId: String, onToggleBookmark: () 
             Hero(390.dp, episode.imageUrl, episode.showTitle, seed = episode.ref.key.hashCode(), modifier = Modifier.snapRowOnFocus(listState, 0), contentWidth = 520.dp) {
                 val kicker = listOfNotNull(
                     episode.channelLabel, episode.showTitle,
-                    episode.episodeNumber?.let { stringResource(R.string.episode_number, it) },
+                    episodeLabel(episode),
                 ).joinToString(" · ")
                 HeroKicker(episode.broadcaster, kicker)
                 Text(

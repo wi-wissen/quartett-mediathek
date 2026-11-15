@@ -1,7 +1,8 @@
-@file:OptIn(androidx.media3.common.util.UnstableApi::class)
+@file:androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 
 package net.wi7.quartettmediathek.tv.player
 
+import net.wi7.quartettmediathek.tv.ui.episodeLabel
 import net.wi7.quartettmediathek.tv.ui.menu.MenuRow
 import net.wi7.quartettmediathek.tv.ui.menu.QDialog
 import android.os.SystemClock
@@ -573,7 +574,7 @@ private fun subLine(episode: Episode): String {
     val locale = Locale.getDefault()
     val published = Instant.ofEpochMilli(episode.publishedAt.toEpochMilliseconds()).atZone(zone)
     val parts = mutableListOf<String>()
-    episode.episodeNumber?.let { parts += stringResource(R.string.player_episode_number, it) }
+    episodeLabel(episode)?.let { parts += it }
     parts += DateTimeFormatter.ofPattern("EEE, d. MMMM", locale).format(published)
     episode.availableUntil?.let {
         val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)

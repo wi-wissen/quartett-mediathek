@@ -74,4 +74,22 @@ class TitleParserTest {
         assertEquals(Variant.ORIGINAL_VERSION, TitleParser.parse("Le Mépris (Originalfassung)").variant)
         assertEquals(Variant.ORIGINAL_VERSION, TitleParser.parse("Film (englische Originalfassung)").variant)
     }
+
+    @Test
+    fun leadingEpisodeNumberBecomesTheNumber() {
+        val ridley = TitleParser.parse("Folge 8: Die gezählten Tage - Teil 2 (S01/E08) (Originalversion)")
+        assertEquals("Die gezählten Tage - Teil 2", ridley.title)
+        assertEquals(1, ridley.season)
+        assertEquals(8, ridley.episode)
+        // The season-relative number wins over the running count.
+        assertEquals(3, TitleParser.parse("Folge 35: Das Ende eines Traums (S04/E03)").episode)
+        val fallers = TitleParser.parse("Folge 1317: Späte Rache")
+        assertEquals("Späte Rache", fallers.title)
+        assertEquals(1317, fallers.episode)
+        assertEquals(32, TitleParser.parse("Folge 32/39: Bedingungssätze").episode)
+        val sturm = TitleParser.parse("Folge 4673")
+        assertEquals("Folge 4673", sturm.title)
+        assertEquals(4673, sturm.episode)
+        assertEquals("Krank Berlin - Folge 8", TitleParser.parse("Krank Berlin - Folge 8").title)
+    }
 }

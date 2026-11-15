@@ -43,6 +43,12 @@ object TitleParser {
         ),
     )
 
+    /** "Folge 8: Die gezählten Tage" (ARD); the number is shown next to the title anyway. */
+    private val leadingEpisode = Regex("""^\s*Folge\s+(\d{1,5})(?:\s*/\s*\d+)?\s*:\s*(?=\S)""", RegexOption.IGNORE_CASE)
+
+    /** A title that is only "Folge 4673" keeps its text but still yields the number. */
+    private val onlyEpisode = Regex("""^\s*Folge\s+(\d{1,5})\s*$""", RegexOption.IGNORE_CASE)
+
     private val leadingSeparators = Regex("""^[\s\-–—:|,·]+""")
     private val trailingSeparators = Regex("""[\s\-–—:|,·]+$""")
     private val emptyBrackets = Regex("""\(\s*\)""")
@@ -67,7 +73,12 @@ object TitleParser {
                 }
             }
         }
-        return ParsedTitle(tidy(text).ifEmpty { raw.trim() }, variant, season, episode)
+        text = tidy(text)
+        (leadingEpisode.find(text) ?: onlyEpisode.find(text))?.let { match ->
+            if (episode == null) episode = match.groupValues[1].toInt()
+            if (match.value.trimEnd().endsWith(":")) text = text.removeRange(match.range).trim()
+        }
+        return ParsedTitle(text.ifEmpty { raw.trim() }, variant, season, episode)
     }
 
     /**
