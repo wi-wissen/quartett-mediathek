@@ -2,6 +2,7 @@ package net.wi7.quartettmediathek.subscription
 
 import kotlinx.serialization.Serializable
 import net.wi7.quartettmediathek.model.Broadcaster
+import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.model.Variant
 
 /**
@@ -23,4 +24,6 @@ data class Subscription(
     val minDurationMinutes: Int = 20,
     val preferredVariant: Variant = Variant.STANDARD,
     val seenUntilEpochMs: Long,
+    /** Every show page this subscription was made from (e.g. the ZDF show and the same show found via search). */
+    val showRefs: List<ShowRef> = emptyList(),
 )

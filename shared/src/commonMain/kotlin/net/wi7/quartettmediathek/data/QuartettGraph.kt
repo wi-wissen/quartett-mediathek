@@ -65,5 +65,7 @@ class QuartettGraph(
     init {
         // Keep the content cache bounded (entries unused for 90 days, at most 20 000 items).
         scope.launch { runCatching { index.prune() } }
+        // Older versions could subscribe to the same show twice (show page + search).
+        scope.launch { runCatching { (library as? SqlLibraryRepository)?.mergeDuplicateSubscriptions() } }
     }
 }

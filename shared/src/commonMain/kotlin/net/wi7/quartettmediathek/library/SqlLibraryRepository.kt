@@ -82,11 +82,41 @@ class SqlLibraryRepository(
         q.watchedKeys().asFlow().mapToList(dispatcher).map { it.toSet() }
 
     override suspend fun subscribe(show: Show) {
-        val id = SubscriptionFactory.idFor(show.ref)
-        if (q.subscriptionById(id).executeAsOneOrNull() != null) return
-        val sub = SubscriptionFactory.forShow(show, clock.now())
-        q.upsertSubscription(sub.id, encode(sub), sub.seenUntilEpochMs, clock.now().toEpochMilliseconds())
+        val fresh = SubscriptionFactory.forShow(show, clock.now())
+        // The same show can be reached as a broadcaster show and as a search hit; it is one subscription.
+        val existing = allSubscriptionsNow().firstOrNull {
+            SubscriptionFactory.belongsTo(it, show.ref) || SubscriptionFactory.topicKey(it) == SubscriptionFactory.topicKey(fresh)
+        }
+        if (existing != null) {
+            if (show.ref !in existing.showRefs) updateSubscription(existing.copy(showRefs = existing.showRefs + show.ref))
+            return
+        }
+        q.upsertSubscription(fresh.id, encode(fresh), fresh.seenUntilEpochMs, clock.now().toEpochMilliseconds())
     }
+
+    /**
+     * Merges subscriptions of the same show (same topics), which older versions could create twice: the oldest
+     * stays and takes over the other ones' show refs. Run once per app start.
+     */
+    suspend fun mergeDuplicateSubscriptions() {
+        val rows = q.allSubscriptions().executeAsList()
+        val subs = rows.mapNotNull { r -> decodeSubscription(r.json)?.let { it to r.created_at_epoch_ms } }
+        subs.groupBy { SubscriptionFactory.topicKey(it.first) }.values.filter { it.size > 1 }.forEach { group ->
+            val sorted = group.sortedBy { it.second }
+            val keep = sorted.first().first
+            val refs = sorted.flatMap { (s, _) -> s.showRefs + listOfNotNull(SubscriptionFactory.refOf(s.id)) }.distinct()
+            q.transaction {
+                sorted.drop(1).forEach { q.deleteSubscription(it.first.id) }
+                q.upsertSubscription(keep.id, encode(keep.copy(showRefs = refs)), keep.seenUntilEpochMs, sorted.first().second)
+            }
+        }
+    }
+
+    private fun allSubscriptionsNow(): List<Subscription> =
+        q.allSubscriptions().executeAsList().mapNotNull { decodeSubscription(it.json) }
+
+    private fun decodeSubscription(json: String): Subscription? =
+        runCatching { LibraryJson.decodeFromString(Subscription.serializer(), json) }.getOrNull()
 
     override suspend fun updateSubscription(subscription: Subscription) {
         val existing = q.subscriptionById(subscription.id).executeAsOneOrNull() ?: return
@@ -98,9 +128,7 @@ class SqlLibraryRepository(
     }
 
     override fun subscriptionFor(show: ShowRef): Flow<Subscription?> =
-        q.subscriptionById(SubscriptionFactory.idFor(show)).asFlow().mapToOneOrNull(dispatcher).map { row ->
-            row?.let { runCatching { LibraryJson.decodeFromString(Subscription.serializer(), it.json) }.getOrNull() }
-        }
+        subscriptions().map { subs -> subs.firstOrNull { SubscriptionFactory.belongsTo(it, show) } }
 
     private fun encode(sub: Subscription) = LibraryJson.encodeToString(Subscription.serializer(), sub)
 

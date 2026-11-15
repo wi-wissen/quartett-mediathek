@@ -22,6 +22,7 @@ import net.wi7.quartettmediathek.platform.createPlatformHttpClient
 import org.junit.Assume.assumeTrue
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -110,6 +111,28 @@ class LiveBackendTest {
         val height = restarted.graph.playback.stream(feed.first().ref).height ?: 0
         log("feed '${show.title}' first stream: ${height}p")
         assertTrue(height >= 1080, "feed '${show.title}' plays only ${height}p")
+    }
+
+    @Test
+    fun sameShowSubscribedFromShowPageAndSearch() = live { app ->
+        // User report: "Ringe der Macht" subscribed twice (show page + search), one of them broken and not removable.
+        val fromStart = app.discover().flatMap { it.items }.filterIsInstance<Teaser.OfShow>().map { it.show }
+            .firstOrNull { it.title.contains("Ringe der Macht", ignoreCase = true) }
+        val fromSearch = app.graph.catalog.search("ringe der macht").filterIsInstance<Teaser.OfShow>()
+            .first { it.show.title.contains("Ringe der Macht", ignoreCase = true) }.show
+        log("subscribe ${fromStart?.ref} and ${fromSearch.ref}")
+        fromStart?.let { app.graph.library.subscribe(it) }
+        app.graph.library.subscribe(fromSearch)
+        val subs = app.graph.library.subscriptions().first()
+        log("subscriptions: ${subs.map { "${it.id} topics=${it.topics} broadcasters=${it.broadcasters}" }}")
+        assertEquals(1, subs.size, "the same show must not be subscribed twice")
+        val feed = withTimeout(120_000) { app.graph.library.feed().first { it.isNotEmpty() } }
+        log("feed: ${feed.size} entries")
+        for (s in subs) {
+            assertTrue(feed.any { it.subscriptionId == s.id }, "subscription ${s.id} has no episodes in the feed")
+            app.graph.library.unsubscribe(s.id)
+        }
+        assertTrue(app.graph.library.subscriptions().first().isEmpty(), "unsubscribe failed")
     }
 
     @Test
