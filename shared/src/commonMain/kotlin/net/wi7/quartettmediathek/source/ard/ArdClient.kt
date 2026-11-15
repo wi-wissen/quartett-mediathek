@@ -16,6 +16,8 @@ import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.model.SourceId
 import net.wi7.quartettmediathek.model.SourceRow
 import net.wi7.quartettmediathek.model.StreamInfo
+import net.wi7.quartettmediathek.model.StreamVariant
+import net.wi7.quartettmediathek.model.distinctByHeightDesc
 import net.wi7.quartettmediathek.model.SubtitleFormat
 import net.wi7.quartettmediathek.model.SubtitleTrack
 import net.wi7.quartettmediathek.model.Teaser
@@ -156,6 +158,9 @@ class ArdClient(
             height = best["maxVResolutionPx"].int,
             subtitles = parseSubtitles(embedded["subtitles"]),
             audioTracks = media.flatMap(::kinds).distinct(),
+            alternatives = if (best === mp4) standard.filter { it["mimeType"].string == "video/mp4" }.mapNotNull { m ->
+                m["url"].string?.let { StreamVariant(height(m), it, "video/mp4") }
+            }.distinctByHeightDesc() else emptyList(),
         )
     }
 

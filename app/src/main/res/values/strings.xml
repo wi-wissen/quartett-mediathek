@@ -51,6 +51,8 @@
     <string name="player_bookmarked">Saved</string>
     <string name="player_next">Next episode</string>
     <string name="player_version_button">Audio / Language</string>
+    <string name="player_quality_button">Quality</string>
+    <string name="player_quality_auto">Automatic (best)</string>
     <string name="player_version_standard">German</string>
     <string name="player_version_original">Original version</string>
     <string name="player_version_ad">German with audio description</string>

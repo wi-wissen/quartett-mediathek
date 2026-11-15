@@ -111,4 +111,18 @@ data class StreamInfo(
     val subtitles: List<SubtitleTrack> = emptyList(),
     /** Audio track languages/classes, e.g. "main", "ad" (ZDF delivers audio description as a separate track). */
     val audioTracks: List<String> = emptyList(),
+    /**
+     * The same video as separate progressive files (same audio version, same format as [url]), best first, one per
+     * height. Includes the file behind [url]. Empty when the source only offers an adaptive (HLS) stream; the player
+     * then selects the quality among the stream's own tracks.
+     */
+    val alternatives: List<StreamVariant> = emptyList(),
 )
+
+/** One progressive file of a stream at a fixed resolution. */
+@Serializable
+data class StreamVariant(val height: Int, val url: String, val mimeType: String)
+
+/** Keeps the first entry per height, sorted by height descending; entries without a height are dropped. */
+fun List<StreamVariant>.distinctByHeightDesc(): List<StreamVariant> =
+    filter { it.height > 0 }.distinctBy { it.height }.sortedByDescending { it.height }

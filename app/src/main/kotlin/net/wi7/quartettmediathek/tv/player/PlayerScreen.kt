@@ -85,6 +85,8 @@ fun PlayerScreen(episode: EpisodeRef, startPositionSeconds: Long?, onExit: () ->
     // Preferences survive switching to the next episode.
     var speed by rememberSaveable { mutableStateOf(1f) }
     var subtitlesOn by rememberSaveable { mutableStateOf(false) }
+    // Wanted video height, null = automatic. Also survives version switches and the next episode.
+    var qualityWish by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         when (val s = state) {
@@ -103,7 +105,8 @@ fun PlayerScreen(episode: EpisodeRef, startPositionSeconds: Long?, onExit: () ->
             }
             is PlayerUiState.Ready -> PlayerContent(
                 session = s.session, vm = vm, speed = speed, onSpeed = { speed = it },
-                subtitlesOn = subtitlesOn, onSubtitles = { subtitlesOn = it }, onExit = onExit,
+                subtitlesOn = subtitlesOn, onSubtitles = { subtitlesOn = it },
+                qualityWish = qualityWish, onQualityWish = { qualityWish = it }, onExit = onExit,
             )
         }
     }
@@ -160,11 +163,19 @@ private fun PlayerContent(
     onSpeed: (Float) -> Unit,
     subtitlesOn: Boolean,
     onSubtitles: (Boolean) -> Unit,
+    qualityWish: Int?,
+    onQualityWish: (Int?) -> Unit,
     onExit: () -> Unit,
 ) {
     val context = LocalContext.current
     val episode = session.episode
     val wantAd = session.variant == Variant.AUDIO_DESCRIPTION && "ad" in session.stream.audioTracks
+    // Heights of the video tracks of an adaptive stream (HLS), known once ExoPlayer has parsed the manifest.
+    var trackHeights by remember(session) { mutableStateOf<List<Int>>(emptyList()) }
+    var tracks by remember(session) { mutableStateOf(Tracks.EMPTY) }
+    val qualityOptions = PlayerLogic.qualityOptions(session.stream, trackHeights)
+    val quality = PlayerLogic.selectedQuality(qualityOptions, qualityWish)
+    val qualityUrl = PlayerLogic.qualityUrl(session.stream, quality)
     val player = remember(session) {
         ExoPlayer.Builder(context).build().apply {
             if (wantAd) {
@@ -173,7 +184,7 @@ private fun PlayerContent(
             }
             trackSelectionParameters = trackSelectionParameters.buildUpon()
                 .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
-            setMediaItem(buildMediaItem(session.stream), session.startPositionMs)
+            setMediaItem(buildMediaItem(session.stream.copy(url = qualityUrl)), session.startPositionMs)
             playWhenReady = true
             prepare()
         }
@@ -199,7 +210,11 @@ private fun PlayerContent(
                 if (!playWhenReady) playing = false
             }
             override fun onPlayerError(error: PlaybackException) { vm.onPlaybackError() }
-            override fun onTracksChanged(tracks: Tracks) { if (wantAd) selectAudioDescription(player, tracks) }
+            override fun onTracksChanged(newTracks: Tracks) {
+                if (wantAd) selectAudioDescription(player, newTracks)
+                tracks = newTracks
+                trackHeights = PlayerLogic.distinctHeights(videoTrackHeights(newTracks))
+            }
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) {
                     vm.reportPosition(player.duration.coerceAtLeast(0) / 1000, player.duration.coerceAtLeast(0) / 1000)
@@ -222,6 +237,18 @@ private fun PlayerContent(
         vm.saveNow()
     }
     LaunchedEffect(speed, player) { player.setPlaybackSpeed(speed) }
+    // Progressive files: swap the URL at the current position (the player and its settings stay).
+    var loadedUrl by remember(player) { mutableStateOf(qualityUrl) }
+    LaunchedEffect(qualityUrl, player) {
+        if (qualityUrl != loadedUrl) {
+            val resumeAt = player.currentPosition
+            player.setMediaItem(buildMediaItem(session.stream.copy(url = qualityUrl)), resumeAt)
+            player.prepare()
+            loadedUrl = qualityUrl
+        }
+    }
+    // Adaptive streams: fix (or release) the video track.
+    LaunchedEffect(quality, tracks, player) { if (session.stream.alternatives.size < 2) applyHlsQuality(player, tracks, quality.height) }
     LaunchedEffect(subtitlesOn, player) {
         player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !subtitlesOn).build()
@@ -316,6 +343,30 @@ private fun PlayerContent(
     val speedLabel = PlayerLogic.formatSpeed(speed, separator)
     val versionLabel = stringResource(versionLabelRes(session.variant))
     var versionChooser by remember { mutableStateOf(false) }
+    var qualityChooser by remember { mutableStateOf(false) }
+    if (qualityChooser) {
+        val currentFocus = remember { FocusRequester() }
+        QDialog(
+            title = stringResource(R.string.player_quality_button),
+            subtitle = null,
+            onDismiss = { qualityChooser = false },
+            initialFocus = currentFocus,
+        ) {
+            qualityOptions.forEach { option ->
+                val current = option == quality
+                MenuRow(
+                    title = qualityLabel(option),
+                    icon = if (current) R.drawable.ic_check else null,
+                    modifier = if (current) Modifier.focusRequester(currentFocus) else Modifier,
+                    onClick = {
+                        qualityChooser = false
+                        onQualityWish(option.height)
+                        touch()
+                    },
+                )
+            }
+        }
+    }
     if (versionChooser) {
         // Chooser instead of cycling: all versions at once, the playing one checked and focused.
         val currentFocus = remember { FocusRequester() }
@@ -344,7 +395,8 @@ private fun PlayerContent(
         showTitle = episode.showTitle,
         channel = episode.channelLabel,
         infoRight = infoRight(
-            session.stream, speed, speedLabel, subtitlesOn && session.stream.subtitles.isNotEmpty(),
+            session.stream, PlayerLogic.shownHeight(session.stream, quality), speed, speedLabel,
+            subtitlesOn && session.stream.subtitles.isNotEmpty(),
             version = versionLabel.takeIf { session.versions.size > 1 || session.variant != Variant.STANDARD },
             versionFailed = versionFailed,
         ),
@@ -358,6 +410,8 @@ private fun PlayerContent(
         speedLabel = speedLabel,
         versionAvailable = session.versions.size > 1,
         versionLabel = stringResource(R.string.player_version_button),
+        qualityAvailable = qualityOptions.isNotEmpty(),
+        qualityLabel = stringResource(R.string.player_quality_button),
         subtitlesAvailable = session.stream.subtitles.isNotEmpty(),
         subtitlesLabel = stringResource(if (subtitlesOn) R.string.player_subtitles_on else R.string.player_subtitles),
         bookmarked = bookmarked,
@@ -370,6 +424,7 @@ private fun PlayerContent(
         onPlayPause = { togglePlay() },
         onSpeed = { onSpeed(PlayerLogic.nextSpeed(speed)); touch() },
         onVersion = { versionChooser = true; touch() },
+        onQuality = { qualityChooser = true; touch() },
         onSubtitles = { onSubtitles(!subtitlesOn); touch() },
         onBookmark = { vm.toggleBookmark(); touch() },
         onNext = {
@@ -452,6 +507,38 @@ private fun PlayerContent(
     }
 }
 
+@Composable
+private fun qualityLabel(option: QualityOption): String =
+    option.height?.let { "${it}p" } ?: stringResource(R.string.player_quality_auto)
+
+/** Heights of all playable video tracks. */
+private fun videoTrackHeights(tracks: Tracks): List<Int> = tracks.groups.filter { it.type == C.TRACK_TYPE_VIDEO }
+    .flatMap { g -> (0 until g.length).filter { g.isTrackSupported(it) }.map { g.getTrackFormat(it).height } }
+    .filter { it != androidx.media3.common.Format.NO_VALUE }
+
+/**
+ * Fixes the video track of an adaptive stream to [height] (the group's tracks of exactly that height), or gives the
+ * choice back to ExoPlayer's adaptive selection for null.
+ */
+private fun applyHlsQuality(player: ExoPlayer, tracks: Tracks, height: Int?) {
+    val params = player.trackSelectionParameters
+    if (height == null) {
+        if (params.overrides.keys.any { it.type == C.TRACK_TYPE_VIDEO }) {
+            player.trackSelectionParameters = params.buildUpon().clearOverridesOfType(C.TRACK_TYPE_VIDEO).build()
+        }
+        return
+    }
+    for (group in tracks.groups.filter { it.type == C.TRACK_TYPE_VIDEO }) {
+        val indexes = (0 until group.length).filter { group.isTrackSupported(it) && group.getTrackFormat(it).height == height }
+        if (indexes.isEmpty()) continue
+        val override = TrackSelectionOverride(group.mediaTrackGroup, indexes)
+        if (params.overrides[group.mediaTrackGroup] != override) {
+            player.trackSelectionParameters = params.buildUpon().setOverrideForType(override).build()
+        }
+        return
+    }
+}
+
 private fun versionLabelRes(variant: Variant): Int = when (variant) {
     Variant.STANDARD -> R.string.player_version_standard
     Variant.ORIGINAL_VERSION -> R.string.player_version_original
@@ -466,11 +553,11 @@ private fun stepLabel(seconds: Int): String =
 
 @Composable
 private fun infoRight(
-    stream: StreamInfo, speed: Float, speedLabel: String, subtitlesOn: Boolean,
+    stream: StreamInfo, height: Int?, speed: Float, speedLabel: String, subtitlesOn: Boolean,
     version: String?, versionFailed: Boolean,
 ): String {
     val format = if (stream.mimeType.contains("mpegurl", ignoreCase = true)) "HLS" else "MP4"
-    val quality = stream.height?.let { (if (it >= 720) "HD " else "") + "${it}p" }
+    val quality = height?.let { (if (it >= 720) "HD " else "") + "${it}p" }
     val parts = listOfNotNull(
         if (versionFailed) stringResource(R.string.player_version_failed) else version,
         format, quality,

@@ -17,6 +17,7 @@ import net.wi7.quartettmediathek.model.EpisodeRef
 import net.wi7.quartettmediathek.model.Show
 import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.model.StreamInfo
+import net.wi7.quartettmediathek.model.StreamVariant
 import net.wi7.quartettmediathek.model.Teaser
 import net.wi7.quartettmediathek.model.Variant
 import net.wi7.quartettmediathek.repository.CatalogRepository
@@ -141,7 +142,10 @@ class FakeLibraryRepository : LibraryRepository {
 
 class FakePlaybackRepository : PlaybackRepository {
     override suspend fun stream(ref: EpisodeRef, variant: Variant): StreamInfo =
-        StreamInfo(url = "https://example.invalid/sample.mp4", mimeType = "video/mp4", height = 720)
+        StreamInfo(
+            url = "https://example.invalid/sample.mp4", mimeType = "video/mp4", height = 720,
+            alternatives = listOf(720, 540, 360).map { StreamVariant(it, "https://example.invalid/sample-$it.mp4", "video/mp4") },
+        )
 }
 
 class FakeSettingsRepository : SettingsRepository {

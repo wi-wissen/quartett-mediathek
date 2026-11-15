@@ -7,6 +7,8 @@ import net.wi7.quartettmediathek.model.EpisodeRef
 import net.wi7.quartettmediathek.model.ShowRef
 import net.wi7.quartettmediathek.model.SourceId
 import net.wi7.quartettmediathek.model.StreamInfo
+import net.wi7.quartettmediathek.model.StreamVariant
+import net.wi7.quartettmediathek.model.distinctByHeightDesc
 import net.wi7.quartettmediathek.model.SubtitleFormat
 import net.wi7.quartettmediathek.model.SubtitleTrack
 import net.wi7.quartettmediathek.model.Variant
@@ -60,7 +62,12 @@ fun MvwEntry.toStreamInfo(): StreamInfo? {
         val format = if (it.substringBefore('?').endsWith(".vtt")) SubtitleFormat.WEBVTT else SubtitleFormat.EBU_TT
         listOf(SubtitleTrack(it, format, "de"))
     }.orEmpty()
-    return StreamInfo(url = url, mimeType = "video/mp4", height = height, subtitles = subs)
+    val alternatives = listOfNotNull(
+        urlVideoHd?.let { StreamVariant(720, it, "video/mp4") },
+        urlVideo?.let { StreamVariant(540, it, "video/mp4") },
+        urlVideoLow?.let { StreamVariant(360, it, "video/mp4") },
+    )
+    return StreamInfo(url = url, mimeType = "video/mp4", height = height, subtitles = subs, alternatives = alternatives)
 }
 
 private fun variantsOf(title: String): Set<Variant> {
