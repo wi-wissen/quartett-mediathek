@@ -75,7 +75,7 @@ abstract class ScreenshotTest(private val locale: String) {
     /** Library with started and watched episodes, so the tile markers are visible in every screenshot. */
     protected val overlay = LibraryOverlay(progress = ProgressIndex(FakeData.sampleProgress()))
 
-    protected fun snap(name: String, activeRoute: String?, content: @Composable () -> Unit) =
+    protected fun snap(name: String, activeRoute: String?, focusRail: Boolean = false, content: @Composable () -> Unit) =
         captureRoboImage("src/test/screenshots/${locale}_$name.png") {
             CompositionLocalProvider(LocalFixedNow provides FakeData.now) {
                 QuartettTheme {
@@ -87,9 +87,15 @@ abstract class ScreenshotTest(private val locale: String) {
                             onRefresh = {},
                             modifier = Modifier.align(Alignment.TopEnd),
                         )
+                        val requesters = remember { TOP_LEVEL.associateWith { FocusRequester() } }
+                        if (focusRail) LaunchedEffect(Unit) {
+                            repeat(10) { withFrameNanos { } }
+                            requesters.getValue(Routes.HOME).requestFocus()
+                            repeat(30) { withFrameNanos { } } // let the expand animation finish
+                        }
                         AppRail(
                             activeRoute = activeRoute,
-                            requesters = TOP_LEVEL.associateWith { FocusRequester() },
+                            requesters = requesters,
                             contentEntry = FocusRequester(),
                             onNavigate = {},
                             onFocusChange = {},
@@ -211,6 +217,9 @@ class GermanScreenshots : ScreenshotTest("de") {
             "screenshot", {}, {}, {}, listState,
         )
     }
+
+    @Test
+    fun homeRailExpanded() = snap("home_rail_expanded", Routes.HOME, focusRail = true) { HomeContent(previewHomeState()) }
 
     @Test
     fun settingsUpdateDownloading() = snap("settings_update_downloading", Routes.SETTINGS) {

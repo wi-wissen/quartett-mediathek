@@ -61,6 +61,9 @@ private val AtTopTolerance = 8.dp
 @Stable
 class HeaderState {
     var visible by mutableStateOf(true)
+
+    /** True while a full-bleed hero image sits behind the header (show/episode page): the top fade is then only a light shade. */
+    var overImage by mutableStateOf(false)
 }
 
 val LocalHeaderState = staticCompositionLocalOf { HeaderState() }

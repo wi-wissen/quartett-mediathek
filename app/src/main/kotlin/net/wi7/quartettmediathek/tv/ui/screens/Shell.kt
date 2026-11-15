@@ -34,6 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -153,11 +156,12 @@ fun AppRail(
     modifier: Modifier = Modifier,
 ) {
     var open by remember { mutableStateOf(false) }
-    val width by animateDpAsState(if (open) 180.dp else 60.dp, tween(180), label = "railWidth")
+    val width by animateDpAsState(if (open) 215.dp else 60.dp, tween(180), label = "railWidth")
     val bg = QColors.Background
     Box(
         modifier.fillMaxHeight().width(width)
-            .background(if (open) Brush.horizontalGradient(0f to bg, 0.72f to bg, 1f to Color.Transparent) else Brush.horizontalGradient(0f to Color.Transparent, 1f to Color.Transparent))
+            .drawBehind { if (open) drawRect(bg) }
+            .drawBehind { if (open) drawRect(Color.White.copy(alpha = 0.08f), topLeft = Offset(size.width - 1.dp.toPx(), 0f), size = Size(1.dp.toPx(), size.height)) }
             .onFocusChanged { open = it.hasFocus; onFocusChange(it.hasFocus) },
     ) {
         Row(Modifier.padding(start = 19.dp, top = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -189,7 +193,7 @@ private fun RailEntry(
         onClick = { onNavigate(item.route) },
         contentAlignment = Alignment.CenterStart,
     ) { focused ->
-        val w by animateDpAsState(if (open) 145.dp else 38.dp, tween(180), label = "itemWidth")
+        val w by animateDpAsState(if (open) 180.dp else 38.dp, tween(180), label = "itemWidth")
         val fg by animateColorAsState(if (focused) QColors.Background else if (active) QColors.Foreground else QColors.Muted, label = "itemFg")
         Row(
             Modifier.width(w).height(34.dp).clip(CircleShape).background(if (focused) QColors.Focus else Color.Transparent).padding(horizontal = 10.dp),
