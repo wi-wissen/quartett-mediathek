@@ -345,6 +345,31 @@ private fun PlayerContent(
     val versionLabel = stringResource(versionLabelRes(session.variant))
     var versionChooser by remember { mutableStateOf(false) }
     var qualityChooser by remember { mutableStateOf(false) }
+    var speedChooser by remember { mutableStateOf(false) }
+    if (speedChooser) {
+        // A list instead of cycling through the speeds with repeated presses.
+        val currentFocus = remember { FocusRequester() }
+        QDialog(
+            title = stringResource(R.string.player_speed_title),
+            subtitle = null,
+            onDismiss = { speedChooser = false },
+            initialFocus = currentFocus,
+        ) {
+            PlayerLogic.SPEEDS.forEach { option ->
+                val current = option == speed
+                MenuRow(
+                    title = PlayerLogic.formatSpeed(option, separator),
+                    icon = if (current) R.drawable.ic_check else null,
+                    modifier = if (current) Modifier.focusRequester(currentFocus) else Modifier,
+                    onClick = {
+                        speedChooser = false
+                        onSpeed(option)
+                        touch()
+                    },
+                )
+            }
+        }
+    }
     if (qualityChooser) {
         val currentFocus = remember { FocusRequester() }
         QDialog(
@@ -423,7 +448,7 @@ private fun PlayerContent(
 
     val actions = OsdActions(
         onPlayPause = { togglePlay() },
-        onSpeed = { onSpeed(PlayerLogic.nextSpeed(speed)); touch() },
+        onSpeed = { speedChooser = true; touch() },
         onVersion = { versionChooser = true; touch() },
         onQuality = { qualityChooser = true; touch() },
         onSubtitles = { onSubtitles(!subtitlesOn); touch() },

@@ -26,13 +26,6 @@ class PlayerLogicTest {
         assertFalse(PlayerLogic.shouldHideOsd(false, 0, 60_000))
     }
 
-    @Test fun speedCycles() {
-        assertEquals(1f, PlayerLogic.nextSpeed(0.75f))
-        assertEquals(1.25f, PlayerLogic.nextSpeed(1f))
-        assertEquals(0.75f, PlayerLogic.nextSpeed(2f))
-        assertEquals(1f, PlayerLogic.nextSpeed(3f))
-    }
-
     @Test fun speedLabels() {
         assertEquals("1×", PlayerLogic.formatSpeed(1f, ','))
         assertEquals("1,25×", PlayerLogic.formatSpeed(1.25f, ','))

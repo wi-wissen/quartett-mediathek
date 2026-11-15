@@ -27,12 +27,6 @@ object PlayerLogic {
     fun shouldHideOsd(playing: Boolean, lastInteractionMs: Long, nowMs: Long, timeoutMs: Long = OSD_TIMEOUT_MS) =
         playing && nowMs - lastInteractionMs >= timeoutMs
 
-    /** Next speed in [SPEEDS], wrapping around; unknown values restart at 1x. */
-    fun nextSpeed(current: Float): Float {
-        val i = SPEEDS.indexOfFirst { kotlin.math.abs(it - current) < 0.001f }
-        return if (i < 0) 1f else SPEEDS[(i + 1) % SPEEDS.size]
-    }
-
     /** "1×", "1,25×" (German) or "1.25×" depending on [decimalSeparator]. */
     fun formatSpeed(speed: Float, decimalSeparator: Char): String {
         val text = when (speed) {

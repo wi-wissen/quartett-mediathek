@@ -167,4 +167,5 @@
     <string name="update_dialog_text">Du hast Version %1$s. Abos und gesehene Folgen bleiben erhalten.</string>
     <string name="update_dialog_install">Jetzt installieren</string>
     <string name="update_dialog_later">Später</string>
+    <string name="player_speed_title">Geschwindigkeit</string>
 </resources>

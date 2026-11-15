@@ -184,18 +184,19 @@ fun SettingsContent(
             }
         }
         item(key = "h-data") { RowHeader(stringResource(R.string.settings_data_title), modifier = Modifier.padding(top = 20.dp)) }
+        // Above the button: nobody scrolls past the last focusable row, so text below it is never seen.
+        item(key = "note") {
+            Text(
+                stringResource(R.string.settings_note), style = QType.body.copy(fontSize = 11.sp), color = QColors.Muted,
+                modifier = Modifier.padding(start = 24.dp, bottom = 12.dp).width(550.dp),
+            )
+        }
         item(key = "cache") {
             SettingOption(
                 title = stringResource(R.string.settings_clear_cache),
                 description = stringResource(if (state.cacheCleared) R.string.settings_cache_cleared else R.string.settings_clear_cache_desc),
                 selected = null, icon = R.drawable.ic_refresh,
                 modifier = Modifier.tracked(sf, KeyCache), onClick = onClearCache,
-            )
-        }
-        item(key = "note") {
-            Text(
-                stringResource(R.string.settings_note), style = QType.body.copy(fontSize = 11.sp), color = QColors.Muted,
-                modifier = Modifier.padding(start = 24.dp, top = 15.dp).width(420.dp),
             )
         }
     }
