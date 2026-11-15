@@ -2,7 +2,6 @@ package net.wi7.quartettmediathek.feed
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import net.wi7.quartettmediathek.model.Broadcaster
 
 class EpisodeOrderTest {
@@ -42,8 +41,9 @@ class EpisodeOrderTest {
     }
 
     @Test
-    fun yearsAreNoSeasons() {
-        assertNull(EpisodeOrder.displaySeason(ep(2026, 145)))
-        assertEquals(2, EpisodeOrder.displaySeason(ep(2, 1)))
+    fun yearSeasonsAreShownButStartWithTheNewest() {
+        assertEquals(2026, EpisodeOrder.displaySeason(ep(2026, 145)))
+        val journal = listOf(ep(2026, 339, "2026-11-14T21:45:00Z"), ep(2026, 340, "2026-11-15T21:45:00Z"))
+        assertEquals("s2026e340", EpisodeOrder.nextUp(journal) { false }?.ref?.key)
     }
 }
