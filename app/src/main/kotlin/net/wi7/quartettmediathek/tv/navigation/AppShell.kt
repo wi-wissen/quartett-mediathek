@@ -1,5 +1,6 @@
 package net.wi7.quartettmediathek.tv.navigation
 
+import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.focus.focusProperties
 import net.wi7.quartettmediathek.tv.ui.theme.QType
@@ -220,6 +221,7 @@ internal fun NavGraphBuilder.railDestination(
  * Back leaves the page as usual.
  */
 internal const val LOADING_FOCUS_TAG = "loading-focus"
+private const val LOADING_HINT_DELAY_MS = 300L
 
 @Composable
 private fun LoadingFocusHolder() {
@@ -227,6 +229,7 @@ private fun LoadingFocusHolder() {
     var focused by remember { mutableStateOf(false) }
     // Once the page took focus, the holder steps aside for good so D-pad moves never land on it.
     var released by remember { mutableStateOf(false) }
+    var showText by remember { mutableStateOf(false) }
     Box(
         Modifier.fillMaxSize()
             .focusRequester(holder)
@@ -239,7 +242,15 @@ private fun LoadingFocusHolder() {
             .testTag(LOADING_FOCUS_TAG),
         contentAlignment = Alignment.Center,
     ) {
-        if (focused) Text(stringResource(R.string.loading), style = QType.body, color = QColors.Muted)
+        if (showText) Text(stringResource(R.string.loading), style = QType.body, color = QColors.Muted)
+    }
+    // Most pages load faster than people notice; a hint that flashes up for a moment only looks restless.
+    LaunchedEffect(focused) {
+        showText = false
+        if (focused) {
+            delay(LOADING_HINT_DELAY_MS)
+            showText = true
+        }
     }
     LaunchedEffect(Unit) { runCatching { holder.requestFocus() } }
 }
