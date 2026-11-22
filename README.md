@@ -6,6 +6,8 @@ Mediatheken, Weiterschauen und die Empfehlungen der Sender.
 
 Kein Konto, kein eigener Server: Abos, Merkliste und Fortschritt bleiben auf deinem Fernseher.
 
+Webseite mit Installationsanleitung: **[quartett-mediathek.wi7.net](https://quartett-mediathek.wi7.net)**
+
 ## So sieht es aus
 
 | Start | Sendung |
