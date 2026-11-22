@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quartett Mediathek – ARD, ZDF, 3sat und arte in einer App für den Fernseher</title>
+<meta name="description" content="Kostenlose Android-TV-App für die Mediatheken von ARD, ZDF, 3sat und arte: Sendungen abonnieren, neue Folgen sehen, merken und weiterschauen. Ohne Konto, ohne Werbung.">
+<meta property="og:title" content="Quartett Mediathek">
+<meta property="og:description" content="ARD, ZDF, 3sat und arte in einer App für den Fernseher. Abos, Merkliste und Weiterschauen – ohne Konto.">
+<meta property="og:image" content="https://quartett-mediathek.wi7.net/screenshots/de_home.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0c1013">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+/* Fonts come with the page (copied from the app at build time); nothing is loaded from third parties. */
+@font-face { font-family: "Bricolage"; src: url("fonts/bricolage_grotesque.ttf") format("truetype"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Figtree"; src: url("fonts/figtree.ttf") format("truetype"); font-weight: 300 900; font-display: swap; }
+
+:root {
+  --bg: #0c1013;
+  --surface: #151b20;
+  --surface2: #1e262d;
+  --line: #2a333b;
+  --fg: #eef2f4;
+  --muted: #9aa6b0;
+  --accent: #f4b63f;
+  --accent-ink: #231a05;
+  --radius: 16px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 400 18px/1.6 "Figtree", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; display: block; }
+h1, h2, h3 { font-family: "Bricolage", "Figtree", sans-serif; line-height: 1.1; letter-spacing: -.015em; margin: 0; }
+h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 12px; }
+h3 { font-size: 21px; margin-bottom: 6px; }
+p { margin: 0 0 12px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+section { padding: 72px 0; }
+.lead { color: var(--muted); font-size: 20px; max-width: 680px; }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); font: 700 21px "Bricolage", sans-serif; }
+.brand img { width: 34px; height: 34px; }
+.top nav { display: flex; gap: 22px; font-size: 16px; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--fg); }
+
+/* Hero */
+.hero { padding: 40px 0 72px; }
+.hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+.kicker { color: var(--accent); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 14px; margin-bottom: 14px; }
+.hero h1 { font-size: clamp(38px, 6.2vw, 68px); margin-bottom: 18px; }
+.hero h1 span { color: var(--accent); }
+.buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; border-radius: 999px; font-weight: 700; text-decoration: none; font-size: 17px; }
+.btn-primary { background: var(--fg); color: var(--bg); }
+.btn-primary:hover { background: #fff; }
+.btn-secondary { background: var(--surface2); color: var(--fg); }
+.btn-secondary:hover { background: var(--line); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 22px; color: var(--muted); font-size: 15px; padding: 0; list-style: none; }
+.facts li::before { content: "✓"; color: var(--accent); font-weight: 700; margin-right: 6px; }
+
+.tv { position: relative; padding-bottom: 22px; }
+.tv-screen { border: 10px solid #05070a; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px var(--line); background: #000; }
+.tv::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 34%; height: 12px; transform: translateX(-50%); background: #05070a; border-radius: 0 0 10px 10px; }
+
+/* Broadcasters */
+.senders { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.sender { padding: 6px 14px; border-radius: 8px; background: var(--surface2); font-weight: 700; font-size: 15px; }
+
+/* Features */
+.features { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 32px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.card .icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(244,182,63,.14); display: grid; place-items: center; margin-bottom: 14px; }
+.card .icon svg { width: 24px; height: 24px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.card p { color: var(--muted); margin: 0; font-size: 17px; }
+
+/* Screenshots */
+.shots { display: grid; grid-template-columns: 1fr; gap: 28px; margin-top: 32px; }
+.shot figure { margin: 0; }
+.shot img { border-radius: 10px; border: 1px solid var(--line); }
+.shot figcaption { color: var(--muted); font-size: 16px; margin-top: 10px; }
+.shot figcaption b { color: var(--fg); }
+.note { color: var(--muted); font-size: 15px; margin-top: 24px; }
+
+/* Install */
+.install { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.steps { counter-reset: step; list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 16px; }
+.steps li { counter-increment: step; position: relative; padding: 20px 22px 20px 76px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
+.steps li::before { content: counter(step); position: absolute; left: 20px; top: 18px; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 800 20px "Bricolage", sans-serif; }
+.steps li p { color: var(--muted); margin: 4px 0 0; font-size: 17px; }
+.path { color: var(--fg); font-weight: 600; }
+.code { display: inline-block; margin-top: 12px; padding: 12px 22px; border-radius: 12px; background: var(--surface2); border: 2px dashed var(--accent); font: 800 clamp(26px, 5vw, 36px) "Bricolage", sans-serif; letter-spacing: .02em; color: var(--fg); }
+.tip { margin-top: 24px; padding: 18px 22px; border-radius: var(--radius); background: rgba(244,182,63,.1); border: 1px solid rgba(244,182,63,.35); font-size: 17px; }
+
+/* Remote */
+.keys { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 28px; }
+.key { display: flex; gap: 14px; align-items: baseline; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 17px; }
+.key b { min-width: 150px; color: var(--fg); }
+.key span { color: var(--muted); }
+
+/* FAQ */
+.faq { margin-top: 28px; display: grid; gap: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 20px; }
+summary { cursor: pointer; padding: 18px 0; font-weight: 700; font-size: 18px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--accent); font-size: 24px; line-height: 1; }
+details[open] summary::after { content: "–"; }
+details p { color: var(--muted); padding-bottom: 6px; font-size: 17px; }
+
+footer { padding: 40px 0 56px; color: var(--muted); font-size: 15px; border-top: 1px solid var(--line); }
+footer .wrap { display: grid; gap: 10px; }
+
+@media (min-width: 760px) {
+  .features { grid-template-columns: repeat(2, 1fr); }
+  .shots { grid-template-columns: repeat(2, 1fr); }
+  .keys { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 980px) {
+  .hero-grid { grid-template-columns: 5fr 6fr; }
+  .features { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) {
+  body { font-size: 17px; }
+  .top nav { display: none; }
+  section { padding: 52px 0; }
+  .steps li { padding-left: 20px; padding-top: 70px; }
+  .key { flex-direction: column; gap: 2px; }
+}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="brand" href="#"><img src="logo.svg" alt="">Quartett Mediathek</a>
+  <nav>
+    <a href="#funktionen">Funktionen</a>
+    <a href="#bilder">Bilder</a>
+    <a href="#installation">Installation</a>
+    <a href="#fragen">Fragen</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="kicker">Kostenlose App für den Fernseher</div>
+      <h1>Vier Mediatheken. <span>Eine App.</span></h1>
+      <p class="lead">Quartett Mediathek bringt ARD, ZDF, 3sat und arte auf deinen Android-Fernseher – mit Abos für deine
+        Lieblingssendungen, einer gemeinsamen Merkliste und Weiterschauen genau dort, wo du aufgehört hast.</p>
+      <div class="senders"><span class="sender">ARD</span><span class="sender">ZDF</span><span class="sender">3sat</span><span class="sender">arte</span></div>
+      <div class="buttons">
+        <a class="btn btn-primary" href="#installation">So installierst du sie</a>
+        <a class="btn btn-secondary" href="#bilder">Bilder ansehen</a>
+      </div>
+      <ul class="facts">
+        <li>Kein Konto</li><li>Keine Werbung</li><li>Keine Kosten</li><li>Updates automatisch</li>
+      </ul>
+    </div>
+    <div class="tv"><div class="tv-screen">
+      <img src="screenshots/de_home.png" width="1920" height="1080" alt="Startseite der App mit Weiterschauen und neuen Folgen aus den Abos">
+    </div></div>
+  </div>
+</section>
+
+<section id="funktionen">
+  <div class="wrap">
+    <h2>Was die App kann</h2>
+    <p class="lead">Statt vier Apps mit vier Bedienkonzepten hast du alles an einem Ort – so einfach wie Abos bei YouTube.</p>
+    <div class="features">
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+        <h3>Sendungen abonnieren</h3>
+        <p>Neue Folgen deiner Sendungen erscheinen von selbst – egal ob sie bei ARD, ZDF, 3sat oder arte laufen.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg></div>
+        <h3>Weiterschauen</h3>
+        <p>Die App merkt sich, wo du warst. Beim nächsten Start geht es mit einem Klick weiter.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+        <h3>Eine Merkliste für alles</h3>
+        <p>Filme, Dokus und Serien aus allen vier Mediatheken auf einer Liste – für später.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h3>Eine Suche</h3>
+        <p>Ein Suchfeld findet Sendungen und Folgen in allen Mediatheken gleichzeitig.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M17 2l-5 5-5-5"/></svg></div>
+        <h3>Gemacht für die Fernbedienung</h3>
+        <p>Große Schrift, klare Wege, alles mit dem Steuerkreuz erreichbar. Bestes Bild bis Full HD, Untertitel, Originalton.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3>Deine Daten bleiben bei dir</h3>
+        <p>Kein Konto, kein eigener Server. Abos, Merkliste und Fortschritt liegen nur auf deinem Fernseher.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bilder">
+  <div class="wrap">
+    <h2>So sieht es aus</h2>
+    <div class="shots">
+      <div class="shot"><figure>
+        <img src="screenshots/de_subscriptions.png" width="1920" height="1080" loading="lazy" alt="Abos: alle neuen Folgen der abonnierten Sendungen">
+        <figcaption><b>Abos.</b> Alle neuen Folgen deiner Sendungen, die neuesten zuerst.</figcaption>
+      </figure></div>
+      <div class="shot"><figure>
+        <img src="screenshots/de_show.png" width="1920" height="1080" loading="lazy" alt="Sendungsseite mit allen Folgen">
+        <figcaption><b>Sendung.</b> Alle Folgen auf einen Blick, abonnieren mit einem Klick.</figcaption>
+      </figure></div>
+      <div class="shot"><figure>
+        <img src="screenshots/de_episode.png" width="1920" height="1080" loading="lazy" alt="Folgenseite mit Beschreibung">
+        <figcaption><b>Folge.</b> Worum es geht, wie lange sie läuft und bis wann sie verfügbar ist.</figcaption>
+      </figure></div>
+      <div class="shot"><figure>
+        <img src="screenshots/de_player_osd.png" width="1920" height="1080" loading="lazy" alt="Player mit Bedienleiste">
+        <figcaption><b>Player.</b> Sprache, Qualität, Geschwindigkeit und Untertitel direkt wählbar.</figcaption>
+      </figure></div>
+      <div class="shot"><figure>
+        <img src="screenshots/de_discover.png" width="1920" height="1080" loading="lazy" alt="Entdecken: Empfehlungen der Sender">
+        <figcaption><b>Entdecken.</b> Die Empfehlungen von ARD, ZDF, 3sat und arte.</figcaption>
+      </figure></div>
+      <div class="shot"><figure>
+        <img src="screenshots/de_search.png" width="1920" height="1080" loading="lazy" alt="Suche über alle Mediatheken">
+        <figcaption><b>Suche.</b> Ein Suchfeld für alle vier Mediatheken.</figcaption>
+      </figure></div>
+    </div>
+    <p class="note">Die Bilder zeigen erfundene Beispielsendungen. In der App siehst du die echten Sendungen und Vorschaubilder der Sender.</p>
+  </div>
+</section>
+
+<section id="installation" class="install">
+  <div class="wrap">
+    <h2>Installation in vier Schritten</h2>
+    <p class="lead">Die App gibt es nicht im Play Store. Du installierst sie mit der kostenlosen App „Downloader“ –
+      das dauert etwa fünf Minuten und geht nur mit der Fernbedienung.</p>
+    <ol class="steps">
+      <li><h3>„Downloader“ installieren</h3>
+        <p>Suche im Play Store (bei Fire TV im Amazon Appstore) nach <span class="path">Downloader</span> von AFTVnews und installiere die App.</p></li>
+      <li><h3>Installation erlauben</h3>
+        <p>Der Fernseher muss Downloader erlauben, Apps zu installieren. Bei Android TV und Google TV:</p>
+        <p><span class="path">Einstellungen → System → Info</span>, dort sieben Mal auf <span class="path">Android TV-Betriebssystem-Build</span> klicken, bis „Du bist jetzt Entwickler“ erscheint.
+          Dann <span class="path">Einstellungen → Apps → Sicherheit → Unbekannte Quellen</span> und <span class="path">Downloader</span> einschalten.</p>
+        <p>Die Menüs heißen je nach Hersteller etwas anders. Bei Fire TV: <span class="path">Einstellungen → Mein Fire TV → Entwickleroptionen → Apps unbekannter Herkunft installieren → Downloader</span>.</p></li>
+      <li><h3>Adresse eingeben</h3>
+        <p>Öffne Downloader und gib in das Adressfeld ein:</p>
+        <div class="code">t1p.de/qmedia</div>
+        <p>Dann auf <span class="path">Go</span> klicken. Die neueste Version wird heruntergeladen.</p></li>
+      <li><h3>Installieren und loslegen</h3>
+        <p>Bestätige mit <span class="path">Installieren</span>. Quartett Mediathek erscheint danach bei deinen Apps. Die Datei in Downloader kannst du löschen.</p></li>
+    </ol>
+    <div class="tip"><b>Updates kommen von selbst:</b> Die App schaut einmal am Tag nach einer neuen Version und fragt dich beim Start.
+      Abos, Merkliste und Fortschritt bleiben dabei erhalten.</div>
+  </div>
+</section>
+
+<section id="bedienung">
+  <div class="wrap">
+    <h2>Bedienung</h2>
+    <div class="keys">
+      <div class="key"><b>Steuerkreuz</b><span>auswählen, links geht es zum Menü</span></div>
+      <div class="key"><b>OK</b><span>öffnen und abspielen</span></div>
+      <div class="key"><b>OK lange drücken</b><span>abonnieren, merken, als gesehen markieren</span></div>
+      <div class="key"><b>Zurück</b><span>eine Seite zurück, im Player erst die Leiste ausblenden</span></div>
+      <div class="key"><b>Links / Rechts im Player</b><span>10 Sekunden zurück bzw. 30 vor, gedrückt halten spult schneller</span></div>
+      <div class="key"><b>Play / Pause</b><span>auf einer Kachel: Folge sofort abspielen</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="fragen">
+  <div class="wrap">
+    <h2>Häufige Fragen</h2>
+    <div class="faq">
+      <details><summary>Kostet die App etwas?</summary>
+        <p>Nein. Die App ist kostenlos, ohne Werbung und ohne Konto. Die Inhalte sind die frei verfügbaren Mediatheken der öffentlich-rechtlichen Sender.</p></details>
+      <details><summary>Auf welchen Geräten läuft sie?</summary>
+        <p>Auf Fernsehern und Streaming-Boxen mit Android TV oder Google TV (zum Beispiel von Sony, Philips, TCL oder Chromecast mit Google TV), ab Android 8.
+          Fire TV sollte ebenfalls funktionieren. Auf Handys, Apple TV, Samsung- und LG-Fernsehern läuft sie nicht.</p></details>
+      <details><summary>Ist die Installation außerhalb des Play Stores sicher?</summary>
+        <p>Die App ist Open Source: Der komplette Quelltext ist öffentlich auf GitHub, und jede Version wird dort automatisch aus diesem Quelltext gebaut.
+          Der Link <b>t1p.de/qmedia</b> führt direkt auf die neueste Version bei GitHub.</p></details>
+      <details><summary>Warum spielt eine Folge im Urlaub nicht?</summary>
+        <p>Manche Sendungen dürfen die Sender nur in Deutschland, Österreich und der Schweiz zeigen. Außerhalb dieser Länder lassen sie sich dann nicht abspielen – das ist auch in den Apps der Sender so.</p></details>
+      <details><summary>Woher kommen die Inhalte?</summary>
+        <p>Direkt von den Mediatheken der Sender. Die Suche und die Abos nutzen zusätzlich <a href="https://mediathekviewweb.de">MediathekViewWeb</a>, ein Verzeichnis aller Mediathek-Sendungen.
+          Quartett Mediathek ist kein Angebot von ARD, ZDF, 3sat oder arte und nicht mit ihnen verbunden.</p></details>
+      <details><summary>Welche Daten werden gesammelt?</summary>
+        <p>Keine. Es gibt kein Konto und keinen Server der App. Abos, Merkliste und Fortschritt bleiben auf deinem Fernseher. Die App spricht nur mit den Mediatheken, MediathekViewWeb und GitHub (für Updates).</p></details>
+      <details><summary>Wie bekomme ich Updates?</summary>
+        <p>Automatisch: Die App fragt einmal am Tag nach einer neuen Version und bietet sie beim Start an. Von Hand geht es unter <span class="path">Einstellungen → Nach Updates suchen</span>. Beim ersten Update fragt der Fernseher einmal, ob die App Updates installieren darf.</p></details>
+      <details><summary>Ist die App auch auf Englisch?</summary>
+        <p>Ja. Ist der Fernseher auf Deutsch eingestellt, ist die App auf Deutsch, sonst auf Englisch.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>Quartett Mediathek ist ein freies Projekt, Quelltext und Versionen auf <a href="https://github.com/wi-wissen/quartett-mediathek">GitHub</a> (MIT-Lizenz).</div>
+    <div>ARD, ZDF, 3sat und arte sind Marken der jeweiligen Sender. Dieses Projekt ist nicht mit ihnen verbunden.</div>
+  </div>
+</footer>
+</body>
+</html>

@@ -11,3 +11,4 @@ captures/
 
 # Local agent worktrees
 .claude/worktrees/
+_site/
